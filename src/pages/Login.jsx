@@ -63,37 +63,55 @@ const Login = () => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-            const response = await fetch(`${root_url}/auth/sign-in`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    email: email.trim(),
-                    password: password,
-                }),
-                signal: controller.signal,
-            });
-
-            clearTimeout(timeoutId);
-
-            console.log("Login response status:", response.status);
-            console.log("Login response:", response);
-
-            // Parse JSON response first
+            let response;
             let data;
+
             try {
+                response = await fetch(`${root_url}/auth/sign-in`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email: email.trim(),
+                        password: password,
+                    }),
+                    signal: controller.signal,
+                });
+
+                clearTimeout(timeoutId);
+
+                console.log("Login response status:", response.status);
+                console.log("Login response:", response);
+
+                // Parse JSON response
                 data = await response.json();
                 console.log("Login data:", data);
-            } catch (parseError) {
-                console.error("Failed to parse response:", parseError);
-                toast({
-                    title: "Server Error",
-                    description:
-                        "Received invalid response from server. Please try again.",
-                    variant: "destructive",
-                });
-                return;
+            } catch (fetchError) {
+                clearTimeout(timeoutId);
+
+                if (fetchError.name === "AbortError") {
+                    toast({
+                        title: "Request Timeout",
+                        description: "Request timed out. Please try again.",
+                        variant: "destructive",
+                    });
+                    return;
+                }
+
+                if (fetchError.name === "SyntaxError") {
+                    console.error("Failed to parse response:", fetchError);
+                    toast({
+                        title: "Server Error",
+                        description:
+                            "Received invalid response from server. Please try again.",
+                        variant: "destructive",
+                    });
+                    return;
+                }
+
+                // Re-throw other errors to be caught by outer catch
+                throw fetchError;
             }
 
             // Now check if response is ok and handle errors with proper data access
