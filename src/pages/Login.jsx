@@ -27,7 +27,6 @@ const Login = () => {
     if (localStorage.getItem("isAuthenticated")) {
         return <Navigate to="/dashboard" replace={true} />;
     }
-
     const handleLogin = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -62,96 +61,30 @@ const Login = () => {
             );
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000); // 10 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
 
+            const response = await fetch(`${root_url}/auth/sign-in`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email: email.trim(),
+                    password: password,
+                }),
+                signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            console.log("Login response status:", response.status);
+            console.log("Login response:", response);
+
+            // Parse JSON response first
+            let data;
             try {
-                const response = await fetch(`${root_url}/auth/sign-in`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        email: email.trim(),
-                        password: password,
-                    }),
-                    signal: controller.signal,
-                });
-
-                clearTimeout(timeoutId);
-
-                console.log("Login response status:", response.status);
-                console.log("Login response:", response);
-                if (!response.ok) {
-                    // don’t destructure yet!
-                    toast({ title: "Error", description: data.message });
-                    return;
-                }
-
-                // Check if response is ok before trying to parse JSON
-                let data;
-
                 data = await response.json();
-
-                const { acct_type } = data?.data;
-                const accessToken = data?.jwt_secret;
-                console.log(data);
-
-                if (accessToken) {
-                    login(accessToken, acct_type);
-                    if (data.message) {
-                        // toast.success(data.message);
-                        toast({
-                            title: "Authentication Error",
-                            description: "Authentication Failed",
-                            variant: "destructive",
-                            action: (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => navigate("/signup")}
-                                >
-                                    Sign Up
-                                </Button>
-                            ),
-                        });
-                    } else {
-                        // toast.success("Signed in successfully!");
-                        toast({
-                            title: "Signed in successful",
-                            description: "Authentication Failed",
-                            variant: "destructive",
-                            action: (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => navigate("/signup")}
-                                >
-                                    Sign Up
-                                </Button>
-                            ),
-                        });
-                    }
-
-                    // Redirect to dashboard after login
-                    // setTimeout(() => {
-                    navigate("/dashboard", { replace: true });
-                    // }, 1500);
-                } else {
-                    toast({
-                        title: "Authentication Error",
-                        description: "Authentication Failed",
-                        variant: "destructive",
-                        action: (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => navigate("/signup")}
-                            >
-                                Sign Up
-                            </Button>
-                        ),
-                    });
-                }
+                console.log("Login data:", data);
             } catch (parseError) {
                 console.error("Failed to parse response:", parseError);
                 toast({
@@ -163,27 +96,25 @@ const Login = () => {
                 return;
             }
 
-            console.log("Login data:", data);
-
+            // Now check if response is ok and handle errors with proper data access
             if (!response.ok) {
-                // Handle different HTTP status codes with specific messages
                 let errorMessage = "Login failed. Please try again.";
 
                 if (response.status === 400) {
                     errorMessage =
-                        data.message ||
+                        data?.message ||
                         "Invalid input. Please check your credentials.";
                 } else if (response.status === 401) {
                     errorMessage =
-                        data.message ||
+                        data?.message ||
                         "Invalid email or password. Please try again.";
                 } else if (response.status === 403) {
                     errorMessage =
-                        data.message ||
+                        data?.message ||
                         "Account access denied. Please contact support.";
                 } else if (response.status === 404) {
                     errorMessage =
-                        data.message ||
+                        data?.message ||
                         "Account not found. Please check your email or sign up.";
 
                     // Provide option to navigate to signup for 404
@@ -204,7 +135,7 @@ const Login = () => {
                     return;
                 } else if (response.status === 422) {
                     errorMessage =
-                        data.message ||
+                        data?.message ||
                         "Please check your input and try again.";
                 } else if (response.status === 500) {
                     errorMessage = "Server error. Please try again later.";
@@ -212,7 +143,7 @@ const Login = () => {
                     errorMessage =
                         "Server is currently unavailable. Please try again later.";
                 } else {
-                    errorMessage = data.message || errorMessage;
+                    errorMessage = data?.message || errorMessage;
                 }
 
                 toast({
@@ -223,24 +154,38 @@ const Login = () => {
                 return;
             }
 
-            // Success case
-            toast({
-                title: "Login successful!",
-                description: "Welcome back to AidConnect!",
-            });
+            // Success case - response is ok
+            const { acct_type } = data?.data;
+            const accessToken = data?.jwt_secret;
 
-            // Store user data for authentication
-            localStorage.setItem("userEmail", email.trim());
-            localStorage.setItem("authData", JSON.stringify(data));
-            localStorage.setItem("isAuthenticated", "true");
+            if (accessToken) {
+                login(accessToken, acct_type);
 
-            // Clear any previous session data
-            sessionStorage.removeItem("isLogin");
-            sessionStorage.removeItem("userEmail");
-            sessionStorage.removeItem("authData");
+                // Success toast
+                toast({
+                    title: "Login successful!",
+                    description: "Welcome back to AidConnect!",
+                });
 
-            // Navigate to dashboard
-            navigate("/dashboard");
+                // Store user data for authentication
+                localStorage.setItem("userEmail", email.trim());
+                localStorage.setItem("authData", JSON.stringify(data));
+                localStorage.setItem("isAuthenticated", "true");
+
+                // Clear any previous session data
+                sessionStorage.removeItem("isLogin");
+                sessionStorage.removeItem("userEmail");
+                sessionStorage.removeItem("authData");
+
+                // Navigate to dashboard
+                navigate("/dashboard", { replace: true });
+            } else {
+                toast({
+                    title: "Authentication Error",
+                    description: "No access token received. Please try again.",
+                    variant: "destructive",
+                });
+            }
         } catch (error) {
             console.error("Login error:", error);
 
