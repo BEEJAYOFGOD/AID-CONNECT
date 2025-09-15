@@ -12,18 +12,9 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-    Heart,
-    Mail,
-    Lock,
-    User,
-    Upload,
-    FileText,
-    EyeOff,
-    Eye,
-} from "lucide-react";
+import { Heart, Mail, Lock, User, Upload, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { root_url, useAuth } from "@/contexts/AuthContext";
+import { root_url } from "@/contexts/AuthContext";
 
 const Signup = () => {
     const [formData, setFormData] = useState({
@@ -34,10 +25,6 @@ const Signup = () => {
         role: "",
     });
 
-    const { login } = useAuth();
-
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [profileImage, setProfileImage] = useState(null);
     const [idDocument, setIdDocument] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -65,7 +52,7 @@ const Signup = () => {
         setIsLoading(true);
 
         try {
-            // ===== Basic Validation =====
+            // Basic validation
             if (formData.password !== formData.confirmPassword) {
                 toast({
                     title: "Password mismatch",
@@ -85,6 +72,7 @@ const Signup = () => {
                 return;
             }
 
+            // Additional validation
             if (!formData.name?.trim()) {
                 toast({
                     title: "Name required",
@@ -112,34 +100,42 @@ const Signup = () => {
                 return;
             }
 
-            // ===== Request =====
-            const payload = {
-                name: formData.name.trim(),
-                email: formData.email.trim(),
-                acct_type: formData.role.trim(),
-                password: formData.password,
-            };
-
-            console.log("Signup URL:", `${root_url}/auth/sign-up`);
-            console.log("Payload:", payload);
+            console.log(root_url);
+            console.log(
+                JSON.stringify({
+                    name: formData.name.trim(),
+                    email: formData.email.trim(),
+                    acct_type: formData.role.trim(),
+                    password: formData.password,
+                })
+            );
 
             const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
             const response = await fetch(`${root_url}/auth/sign-up`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-                signal: controller.signal,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: formData.name.trim(),
+                    email: formData.email.trim(),
+                    acct_type: formData.role.trim(),
+                    password: formData.password,
+                }),
             });
 
+            clearTimeout(timeoutId);
+
+            console.log(response);
+
+            // Check if response is ok before trying to parse JSON
             let data;
             try {
-                data = await response;
-
-                console.log(data);
+                data = await response.json();
             } catch (parseError) {
                 console.error("Failed to parse response:", parseError);
-                console.log(parseError);
                 toast({
                     title: "Server Error",
                     description:
@@ -149,38 +145,31 @@ const Signup = () => {
                 return;
             }
 
-            console.log("Signup response:", data);
+            console.log(data);
 
-            // ===== Error Handling =====
             if (!response.ok) {
+                // Handle different HTTP status codes with specific messages
                 let errorMessage = "Something went wrong during signup";
 
-                switch (response.status) {
-                    case 400:
-                        errorMessage =
-                            data.message ||
-                            "Invalid input. Please check your information.";
-                        break;
-                    case 409:
-                        errorMessage =
-                            data.message ||
-                            "An account with this email already exists.";
-                        break;
-                    case 422:
-                        errorMessage =
-                            data.message ||
-                            "Please check your input and try again.";
-                        break;
-                    case 500:
-                        errorMessage = "Server error. Please try again later.";
-                        break;
-                    default:
-                        if (response.status >= 500) {
-                            errorMessage =
-                                "Server is currently unavailable. Please try again later.";
-                        } else {
-                            errorMessage = data.message || errorMessage;
-                        }
+                if (response.status === 400) {
+                    errorMessage =
+                        data.message ||
+                        "Invalid input. Please check your information.";
+                } else if (response.status === 409) {
+                    errorMessage =
+                        data.message ||
+                        "An account with this email already exists.";
+                } else if (response.status === 422) {
+                    errorMessage =
+                        data.message ||
+                        "Please check your input and try again.";
+                } else if (response.status === 500) {
+                    errorMessage = "Server error. Please try again later.";
+                } else if (response.status >= 500) {
+                    errorMessage =
+                        "Server is currently unavailable. Please try again later.";
+                } else {
+                    errorMessage = data.message || errorMessage;
                 }
 
                 toast({
@@ -191,26 +180,21 @@ const Signup = () => {
                 return;
             }
 
-            // ===== Success =====
+            // Success case
             toast({
                 title: "Account created successfully!",
-                description: "Welcome to GiveTrust! You are now logged in.",
+                description: "Please check your email for OTP verification",
             });
 
-            // Store user data for authentication
-            localStorage.setItem("userEmail", formData.email);
-            localStorage.setItem("authData", JSON.stringify(data));
-            localStorage.setItem("isAuthenticated", "true");
-
-            // Clear any previous session data
+            sessionStorage.setItem("userEmail", formData.email);
+            sessionStorage.setItem("authData", JSON.stringify(data));
             sessionStorage.removeItem("isLogin");
-            sessionStorage.removeItem("userEmail");
-            sessionStorage.removeItem("authData");
 
-            navigate("/"); // redirect to main app
+            navigate("/auth/otp/verification");
         } catch (error) {
             console.error("Signup error:", error);
 
+            // Handle different types of errors
             let errorMessage =
                 "An unexpected error occurred. Please try again.";
 
@@ -311,6 +295,7 @@ const Signup = () => {
                                             assistance
                                         </p>
                                     </button>
+                                    <p></p>
                                 </div>
                             </div>
 
@@ -334,7 +319,7 @@ const Signup = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="email">Email</Label>
+                                    <Label htmlFor="email">Emailyy</Label>
                                     <div className="relative">
                                         <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                         <Input
@@ -359,30 +344,13 @@ const Signup = () => {
                                         <Input
                                             id="password"
                                             name="password"
-                                            type={
-                                                showPassword
-                                                    ? "text"
-                                                    : "password"
-                                            }
+                                            type="password"
                                             placeholder="Create a password"
                                             value={formData.password}
                                             onChange={handleInputChange}
-                                            className="pl-10 pr-10"
+                                            className="pl-10"
                                             required
                                         />
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setShowPassword(!showPassword)
-                                            }
-                                            className="absolute right-3 top-3 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
-                                        >
-                                            {showPassword ? (
-                                                <EyeOff className="h-4 w-4" />
-                                            ) : (
-                                                <Eye className="h-4 w-4" />
-                                            )}
-                                        </button>
                                     </div>
                                 </div>
 
@@ -395,32 +363,13 @@ const Signup = () => {
                                         <Input
                                             id="confirmPassword"
                                             name="confirmPassword"
-                                            type={
-                                                showConfirmPassword
-                                                    ? "text"
-                                                    : "password"
-                                            }
+                                            type="password"
                                             placeholder="Confirm your password"
                                             value={formData.confirmPassword}
                                             onChange={handleInputChange}
-                                            className="pl-10 pr-10"
+                                            className="pl-10"
                                             required
                                         />
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setShowConfirmPassword(
-                                                    !showConfirmPassword
-                                                )
-                                            }
-                                            className="absolute right-3 top-3 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
-                                        >
-                                            {showConfirmPassword ? (
-                                                <EyeOff className="h-4 w-4" />
-                                            ) : (
-                                                <Eye className="h-4 w-4" />
-                                            )}
-                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -431,12 +380,12 @@ const Signup = () => {
                                     <Label className="text-base font-medium flex items-center space-x-2">
                                         <span>Verification Documents</span>
                                         <Badge variant="secondary">
-                                            Optional
+                                            Required
                                         </Badge>
                                     </Label>
                                     <p className="text-sm text-muted-foreground mt-1">
                                         Upload documents to verify your identity
-                                        (can be done later)
+                                        and prevent fraud
                                     </p>
                                 </div>
 
@@ -498,7 +447,7 @@ const Signup = () => {
                             >
                                 {isLoading
                                     ? "Creating Account..."
-                                    : "Create Account & Sign In"}
+                                    : "Create Account"}
                             </Button>
                         </form>
 
@@ -508,21 +457,95 @@ const Signup = () => {
                                 <Button
                                     variant="link"
                                     className="p-0 h-auto text-primary hover:text-primary-glow"
-                                    onClick={() => navigate("/auth/login")}
+                                    onClick={() => navigate("/login")}
                                 >
                                     Sign in here
                                 </Button>
                             </p>
-                            <p className="text-xs text-muted-foreground mt-2">
-                                Forgot your password?{" "}
-                                <Button
-                                    variant="link"
-                                    className="p-0 h-auto text-xs text-primary hover:text-primary-glow"
-                                    onClick={() => navigate("/forgot-password")}
-                                >
-                                    Reset it here
-                                </Button>
-                            </p>
+
+                            {/* <button
+                                onClick={async () => {
+                                    setIsLoading(true);
+                                    const response = await fetch(
+                                        `${root_url}/auth/request-otp`,
+                                        {
+                                            method: "POST",
+                                            headers: {
+                                                "Content-Type":
+                                                    "application/json",
+                                            },
+                                            body: JSON.stringify({
+                                                email: "adexbolaji100@gmail.com",
+                                            }),
+                                        }
+                                    );
+
+                                    clearTimeout(timeoutId);
+
+                                    console.log(response);
+
+                                    // Check if response is ok before trying to parse JSON
+                                    let data;
+                                    try {
+                                        data = await response.json();
+                                    } catch (parseError) {
+                                        console.error(
+                                            "Failed to parse response:",
+                                            parseError
+                                        );
+                                        toast({
+                                            title: "Server Error",
+                                            description:
+                                                "Received invalid response from server. Please try again.",
+                                            variant: "destructive",
+                                        });
+                                        return;
+                                    }
+
+                                    setIsLoading(false);
+                                    console.log(data);
+
+                                    // if (!response.ok) {
+                                    //     // Handle different HTTP status codes with specific messages
+                                    //     let errorMessage =
+                                    //         "Something went wrong during signup";
+
+                                    //     if (response.status === 400) {
+                                    //         errorMessage =
+                                    //             data.message ||
+                                    //             "Invalid input. Please check your information.";
+                                    //     } else if (response.status === 409) {
+                                    //         errorMessage =
+                                    //             data.message ||
+                                    //             "An account with this email already exists.";
+                                    //     } else if (response.status === 422) {
+                                    //         errorMessage =
+                                    //             data.message ||
+                                    //             "Please check your input and try again.";
+                                    //     } else if (response.status === 500) {
+                                    //         errorMessage =
+                                    //             "Server error. Please try again later.";
+                                    //     } else if (response.status >= 500) {
+                                    //         errorMessage =
+                                    //             "Server is currently unavailable. Please try again later.";
+                                    //     } else {
+                                    //         errorMessage =
+                                    //             data.message || errorMessage;
+                                    //     }
+
+                                    //     toast({
+                                    //         title: "Signup failed",
+                                    //         description: errorMessage,
+                                    //         variant: "destructive",
+                                    //     });
+                                    //     return;
+                                    // }
+
+                                    // Success case
+                                }}
+                            >
+                                {isLoading ? "getting" : "get OTP"}
+                            </button> */}
                         </div>
                     </CardContent>
                 </Card>

@@ -144,7 +144,7 @@ const BrowseNeeds = () => {
     const getProgress = (raised, amount) => Math.round((raised / amount) * 100);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
+        <div className="min-h-screen ">
             {/* Header */}
             <header className="border-b bg-card/50 backdrop-blur-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -181,11 +181,11 @@ const BrowseNeeds = () => {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Search and Filters */}
                 <div className="mb-8">
-                    <div className="flex flex-col lg:flex-row gap-4 mb-6">
+                    <div className="flex lg:flex-row gap-4 mb-6">
                         {/* Search */}
                         <div className="flex-1">
-                            <div className="flex  bg-white border">
-                                <Search className="h-4 w-4 text-muted-foreground" />
+                            <div className="flex justify-center items-center  gap-4 bg-red-500 border-4 border-red-500">
+                                <Search className="h-4 w-4 text-muted-foreground " />
                                 <Input
                                     placeholder="Search needs by title or description..."
                                     value={searchTerm}
@@ -195,6 +195,7 @@ const BrowseNeeds = () => {
                                     // className="pl-10"
                                 />
                             </div>
+                            div
                         </div>
 
                         {/* Category Filter */}
