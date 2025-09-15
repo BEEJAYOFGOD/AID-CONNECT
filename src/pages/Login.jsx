@@ -64,26 +64,32 @@ const Login = () => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 60000); // 10 second timeout
 
-            const response = await fetch(`${root_url}/auth/sign-in`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    email: email.trim(),
-                    password: password,
-                }),
-                signal: controller.signal,
-            });
-
-            clearTimeout(timeoutId);
-
-            console.log("Login response status:", response.status);
-            console.log("Login response:", response);
-
-            // Check if response is ok before trying to parse JSON
-            let data;
             try {
+                const response = await fetch(`${root_url}/auth/sign-in`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email: email.trim(),
+                        password: password,
+                    }),
+                    signal: controller.signal,
+                });
+
+                clearTimeout(timeoutId);
+
+                console.log("Login response status:", response.status);
+                console.log("Login response:", response);
+                if (!response.ok) {
+                    // don’t destructure yet!
+                    toast({ title: "Error", description: data.message });
+                    return;
+                }
+
+                // Check if response is ok before trying to parse JSON
+                let data;
+
                 data = await response.json();
 
                 const { acct_type } = data?.data;
