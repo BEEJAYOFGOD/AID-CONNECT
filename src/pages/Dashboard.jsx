@@ -391,9 +391,17 @@ const Dashboard = () => {
                         <nav className="hidden md:flex items-center space-x-6">
                             <Button
                                 variant="ghost"
-                                onClick={() => navigate("/browse")}
+                                onClick={() => {
+                                    if (userRole === "donor") {
+                                        navigate("/browse");
+                                    } else {
+                                        navigate("/donations");
+                                    }
+                                }}
                             >
-                                Browse Needs
+                                {userRole == "donor"
+                                    ? "Browse Needs"
+                                    : "Browse Donations"}
                             </Button>
                             {userRole === "recipient" && (
                                 <Button

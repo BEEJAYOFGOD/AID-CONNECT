@@ -12,7 +12,8 @@ import CreateNeed from "./pages/CreateNeed";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "@/contexts/AuthContext";
 import PageTitle from "./components/PageTitle";
-import ProtectedRoute from "@/components/Protectedroute";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import DonationsPage from "@/pages/Donations";
 // import OTPVerification from "./auth/OtpVerification";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,14 @@ const App = () => (
                             }
                         />
                         <Route
+                            path="/Donations"
+                            element={
+                                <ProtectedRoute>
+                                    <DonationsPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
                             path="/create-need"
                             element={
                                 <ProtectedRoute>
@@ -62,6 +71,7 @@ const App = () => (
                                 </ProtectedRoute>
                             }
                         />
+
                         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                         <Route path="*" element={<NotFound />} />
                     </Routes>
