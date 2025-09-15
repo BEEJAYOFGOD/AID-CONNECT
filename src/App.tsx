@@ -14,6 +14,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import PageTitle from "./components/PageTitle";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DonationsPage from "@/pages/Donations";
+import History from "./pages/History";
 // import OTPVerification from "./auth/OtpVerification";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,14 @@ const App = () => (
                             element={
                                 <ProtectedRoute>
                                     <BrowseNeeds />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/history"
+                            element={
+                                <ProtectedRoute>
+                                    <History />
                                 </ProtectedRoute>
                             }
                         />

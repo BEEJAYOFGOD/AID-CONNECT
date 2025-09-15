@@ -1,0 +1,375 @@
+import React, { useState, useEffect } from "react";
+import {
+    TrendingUp,
+    Package,
+    CheckCircle,
+    DollarSign,
+    Clock,
+    AlertCircle,
+    RefreshCw,
+    Calendar,
+    User,
+    Hash,
+} from "lucide-react";
+import { root_url, useAuth } from "@/contexts/AuthContext";
+
+const History = () => {
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const { accessToken } = useAuth();
+
+    const fetchDashboardStats = async () => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            // Get access token from localStorage or your preferred storage method
+
+            if (!accessToken) {
+                throw new Error("No access token found. Please login again.");
+            }
+
+            const response = await fetch(
+                `${root_url}/request/dashboard/stats`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error("Unauthorized. Please login again.");
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            setData(result);
+        } catch (err) {
+            setError(err.message || "Failed to fetch dashboard statistics");
+            setData(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+    useEffect(() => {
+        fetchDashboardStats();
+    }, []);
+
+    const handleRetry = () => {
+        fetchDashboardStats();
+    };
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+        }).format(amount);
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
+        return new Date(dateString).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    };
+
+    // Error State
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gray-50 p-6">
+                <div className="max-w-6xl mx-auto">
+                    <div className="bg-white rounded-lg shadow-sm border border-red-200 p-8 text-center">
+                        <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            Error Loading Dashboard
+                        </h3>
+                        <p className="text-gray-600 mb-6">{error}</p>
+                        <button
+                            onClick={handleRetry}
+                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50 p-6">
+            <div className="max-w-6xl mx-auto">
+                {/* Header */}
+                <div className="mb-8">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                                <TrendingUp className="h-8 w-8 text-blue-500 mr-3" />
+                                Dashboard History
+                            </h1>
+                            <p className="text-gray-600 mt-2">
+                                Overview of your donation requests and
+                                statistics
+                            </p>
+                        </div>
+                        <button
+                            onClick={handleRetry}
+                            disabled={loading}
+                            className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        >
+                            <RefreshCw
+                                className={`h-4 w-4 mr-2 ${
+                                    loading ? "animate-spin" : ""
+                                }`}
+                            />
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                {/* Loading State */}
+                {loading && (
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+                        <RefreshCw className="h-8 w-8 text-blue-500 mx-auto mb-4 animate-spin" />
+                        <p className="text-gray-600">
+                            Loading dashboard statistics...
+                        </p>
+                    </div>
+                )}
+
+                {/* Dashboard Content */}
+                {!loading && data && (
+                    <>
+                        {/* Stats Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            {/* Total Donated */}
+                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600">
+                                            Total Donated
+                                        </p>
+                                        <p className="text-2xl font-bold text-green-600">
+                                            {formatCurrency(data.totalDonated)}
+                                        </p>
+                                    </div>
+                                    <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <DollarSign className="h-6 w-6 text-green-600" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Open Requests */}
+                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600">
+                                            Open Requests
+                                        </p>
+                                        <p className="text-2xl font-bold text-orange-600">
+                                            {data.openCount}
+                                        </p>
+                                    </div>
+                                    <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                                        <Package className="h-6 w-6 text-orange-600" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Fulfilled Requests */}
+                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600">
+                                            Fulfilled Requests
+                                        </p>
+                                        <p className="text-2xl font-bold text-blue-600">
+                                            {data.fulfilledCount}
+                                        </p>
+                                    </div>
+                                    <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <CheckCircle className="h-6 w-6 text-blue-600" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Summary Card */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                                Summary
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <p className="text-sm text-gray-600 mb-2">
+                                        Success Rate
+                                    </p>
+                                    <div className="flex items-center">
+                                        <div className="flex-1 bg-gray-200 rounded-full h-2 mr-3">
+                                            <div
+                                                className="bg-green-500 h-2 rounded-full transition-all"
+                                                style={{
+                                                    width: `${
+                                                        data.openCount +
+                                                            data.fulfilledCount >
+                                                        0
+                                                            ? (data.fulfilledCount /
+                                                                  (data.openCount +
+                                                                      data.fulfilledCount)) *
+                                                              100
+                                                            : 0
+                                                    }%`,
+                                                }}
+                                            ></div>
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-900">
+                                            {data.openCount +
+                                                data.fulfilledCount >
+                                            0
+                                                ? Math.round(
+                                                      (data.fulfilledCount /
+                                                          (data.openCount +
+                                                              data.fulfilledCount)) *
+                                                          100
+                                                  )
+                                                : 0}
+                                            %
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-600 mb-2">
+                                        Total Requests
+                                    </p>
+                                    <p className="text-xl font-semibold text-gray-900">
+                                        {data.openCount + data.fulfilledCount}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* History Section */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                            <div className="px-6 py-4 border-b border-gray-200">
+                                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                                    <Clock className="h-5 w-5 text-gray-500 mr-2" />
+                                    Recent History
+                                </h3>
+                            </div>
+
+                            {data.history && data.history.length > 0 ? (
+                                <div className="divide-y divide-gray-200">
+                                    {data.history.map((item, index) => (
+                                        <div
+                                            key={item.id || index}
+                                            className="p-6 hover:bg-gray-50 transition-colors"
+                                        >
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center mb-2">
+                                                        <Hash className="h-4 w-4 text-gray-400 mr-1" />
+                                                        <span className="text-sm text-gray-500">
+                                                            {item.id ||
+                                                                `Item #${
+                                                                    index + 1
+                                                                }`}
+                                                        </span>
+                                                    </div>
+
+                                                    <h4 className="text-lg font-medium text-gray-900 mb-1">
+                                                        {item.title ||
+                                                            item.name ||
+                                                            "Untitled Request"}
+                                                    </h4>
+
+                                                    {item.description && (
+                                                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                                                            {item.description}
+                                                        </p>
+                                                    )}
+
+                                                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                                                        {item.amount && (
+                                                            <div className="flex items-center">
+                                                                <DollarSign className="h-4 w-4 mr-1" />
+                                                                {formatCurrency(
+                                                                    item.amount
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        {item.createdBy && (
+                                                            <div className="flex items-center">
+                                                                <User className="h-4 w-4 mr-1" />
+                                                                {item.createdBy}
+                                                            </div>
+                                                        )}
+
+                                                        {item.createdAt && (
+                                                            <div className="flex items-center">
+                                                                <Calendar className="h-4 w-4 mr-1" />
+                                                                {formatDate(
+                                                                    item.createdAt
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="ml-4 flex-shrink-0">
+                                                    <span
+                                                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                                            item.status ===
+                                                                "fulfilled" ||
+                                                            item.status ===
+                                                                "completed"
+                                                                ? "bg-green-100 text-green-800"
+                                                                : item.status ===
+                                                                  "pending"
+                                                                ? "bg-yellow-100 text-yellow-800"
+                                                                : item.status ===
+                                                                  "open"
+                                                                ? "bg-blue-100 text-blue-800"
+                                                                : "bg-gray-100 text-gray-800"
+                                                        }`}
+                                                    >
+                                                        {item.status ||
+                                                            "Unknown"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="p-8 text-center">
+                                    <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                                    <h4 className="text-lg font-medium text-gray-900 mb-2">
+                                        No History Available
+                                    </h4>
+                                    <p className="text-gray-600">
+                                        Your request history will appear here
+                                        once you start making donations.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default History;
