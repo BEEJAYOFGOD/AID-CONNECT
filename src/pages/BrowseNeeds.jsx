@@ -34,6 +34,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, root_url } from "@/contexts/AuthContext";
 import Modal from "@/components/modal";
+import DonationModal from "@/components/DonationModal";
 
 const BrowseNeeds = () => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -46,10 +47,12 @@ const BrowseNeeds = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const [pageSize] = useState(10);
+    const [showModal, setShowModal] = useState(false);
 
     const navigate = useNavigate();
     const { toast } = useToast();
     const { user } = useAuth();
+    const accessToken = localStorage.getItem("accessToken");
 
     // Get root URL from environment or config
 
@@ -235,6 +238,7 @@ const BrowseNeeds = () => {
 
     const handleDonate = (need) => {
         // Navigate to donation page or open donation modal
+        setShowModal(true);
     };
 
     const getProgress = (currentAmount, targetAmount) => {
@@ -578,6 +582,18 @@ const BrowseNeeds = () => {
                                                 ? "Donate Now"
                                                 : "Not Available"}
                                         </Button>
+
+                                        {showModal && (
+                                            <DonationModal
+                                                need={need}
+                                                onClose={() =>
+                                                    setShowModal(false)
+                                                }
+                                                rootUrl={root_url}
+                                                accessToken={accessToken}
+                                                isOpen={showModal}
+                                            />
+                                        )}
                                     </CardContent>
                                 </Card>
                             ))}
