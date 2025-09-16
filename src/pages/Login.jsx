@@ -142,6 +142,7 @@ const Login = () => {
                         variant: "destructive",
                         action: (
                             <Button
+                                className="bg-slate-800"
                                 variant="outline"
                                 size="sm"
                                 onClick={() => navigate("/signup")}
