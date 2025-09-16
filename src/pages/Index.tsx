@@ -52,7 +52,7 @@ const Index = () => {
                                 <Heart className="w-6 h-6 text-primary-foreground" />
                             </div>
                             <h1 className="text-2xl font-bold text-foreground">
-                                GiveTrust
+                                AidConnect
                             </h1>
                         </div>
 
@@ -118,7 +118,7 @@ const Index = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                            Why Choose GiveTrust?
+                            Why Choose AidConnect?
                         </h2>
                         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                             Built on trust, powered by blockchain technology,
@@ -198,7 +198,7 @@ const Index = () => {
                         onClick={() => navigate("/auth/signup")}
                         className="bg-gradient-to-r from-primary to-primary-glow hover:opacity-90 text-lg px-8 py-6"
                     >
-                        Join GiveTrust Now
+                        Join AidConnect Now
                     </Button>
                 </div>
             </section>
@@ -211,7 +211,7 @@ const Index = () => {
                             <Heart className="w-5 h-5 text-primary-foreground" />
                         </div>
                         <span className="text-lg font-bold text-foreground">
-                            GiveTrust
+                            Aid Connectt
                         </span>
                     </div>
                     <p className="text-muted-foreground">

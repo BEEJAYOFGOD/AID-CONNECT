@@ -76,10 +76,7 @@ const History = () => {
     };
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-        }).format(amount);
+        return `₦${amount}`;
     };
 
     const formatDate = (dateString) => {
@@ -107,7 +104,7 @@ const History = () => {
                         </p>
                     </div>
                     <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <DollarSign className="h-6 w-6 text-green-600" />
+                        <p className="text-2xl text-green-600 font-bold">₦</p>
                     </div>
                 </div>
             </div>

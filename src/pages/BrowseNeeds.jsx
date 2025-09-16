@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, root_url } from "@/contexts/AuthContext";
+import Modal from "@/components/modal";
 
 const BrowseNeeds = () => {
     const [searchTerm, setSearchTerm] = useState("");

@@ -524,7 +524,7 @@ const Dashboard = () => {
                                 <Heart className="w-6 h-6 text-primary-foreground" />
                             </div>
                             <h1 className="text-2xl font-bold text-foreground">
-                                AIDCONNECT
+                                AidConnect
                             </h1>
                         </div>
 
