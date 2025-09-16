@@ -431,6 +431,7 @@ const BrowseNeeds = () => {
                                     key={need.id}
                                     className="border-0 shadow-soft hover:shadow-elegant transition-all duration-300"
                                 >
+                                    <>{console.log(need)}</>
                                     <CardHeader className="pb-4">
                                         <div className="flex items-start justify-between">
                                             <div className="flex items-center space-x-3">
@@ -476,8 +477,7 @@ const BrowseNeeds = () => {
                                                     </Badge>
                                                 )}
                                                 {(need.verified ||
-                                                    need.status ===
-                                                        "active") && (
+                                                    need.status === "open") && (
                                                     <Badge
                                                         variant="default"
                                                         className="text-xs bg-primary/10 text-primary"
@@ -563,10 +563,10 @@ const BrowseNeeds = () => {
                                         <Button
                                             className="w-full bg-gradient-to-r from-primary to-primary-glow hover:opacity-90"
                                             onClick={() => handleDonate(need)}
-                                            disabled={need.status !== "active"}
+                                            disabled={need.status !== "open"}
                                         >
                                             <DollarSign className="w-4 h-4 mr-2" />
-                                            {need.status === "active"
+                                            {need.status === "open"
                                                 ? "Donate Now"
                                                 : "Not Available"}
                                         </Button>
