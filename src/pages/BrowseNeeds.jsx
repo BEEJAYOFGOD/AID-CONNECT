@@ -235,7 +235,6 @@ const BrowseNeeds = () => {
 
     const handleDonate = (need) => {
         // Navigate to donation page or open donation modal
-        navigate(`/donate/${need.id}`, { state: { need } });
     };
 
     const getProgress = (currentAmount, targetAmount) => {
@@ -252,20 +251,23 @@ const BrowseNeeds = () => {
         }).format(amount || 0);
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return "";
-        const date = new Date(dateString);
+    const formatTimeAgo = (dateString) => {
         const now = new Date();
-        const diffTime = date - now;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const createdDate = new Date(dateString);
+        const diffInMs = now - createdDate;
+        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+        const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+        const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+        const diffInWeeks = Math.floor(diffInDays / 7);
+        const diffInMonths = Math.floor(diffInDays / 30);
 
-        if (diffDays > 0) {
-            return `${diffDays} days left`;
-        } else if (diffDays === 0) {
-            return "Ends today";
-        } else {
-            return "Expired";
-        }
+        if (diffInMinutes < 1) return "Just now";
+        if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+        if (diffInHours < 24) return `${diffInHours}h ago`;
+        if (diffInDays < 7) return `${diffInDays}d ago`;
+        if (diffInWeeks < 4) return `${diffInWeeks}w ago`;
+        if (diffInMonths < 12) return `${diffInMonths}mo ago`;
+        return createdDate.toLocaleDateString();
     };
 
     const getCategoryLabel = (category) => {
@@ -427,11 +429,13 @@ const BrowseNeeds = () => {
                     <>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                             {needs.map((need) => (
+                                // Add this helper function at the top of your component or in a utils file
+
+                                // Updated Card Component
                                 <Card
-                                    key={need.id}
+                                    key={need._id || need.id} // Use _id from your object structure
                                     className="border-0 shadow-soft hover:shadow-elegant transition-all duration-300"
                                 >
-                                    <>{console.log(need)}</>
                                     <CardHeader className="pb-4">
                                         <div className="flex items-start justify-between">
                                             <div className="flex items-center space-x-3">
@@ -494,7 +498,7 @@ const BrowseNeeds = () => {
                                             {need.description}
                                         </p>
 
-                                        {/* Location and Date */}
+                                        {/* Location and Creation Time */}
                                         <div className="flex items-center justify-between text-xs text-muted-foreground">
                                             <div className="flex items-center space-x-1">
                                                 <MapPin className="w-3 h-3" />
@@ -506,7 +510,9 @@ const BrowseNeeds = () => {
                                             <div className="flex items-center space-x-1">
                                                 <Clock className="w-3 h-3" />
                                                 <span>
-                                                    {formatDate(need.deadline)}
+                                                    {formatTimeAgo(
+                                                        need.createdAt
+                                                    )}
                                                 </span>
                                             </div>
                                         </div>
@@ -523,18 +529,19 @@ const BrowseNeeds = () => {
                                                 <span className="text-sm text-muted-foreground">
                                                     {getProgress(
                                                         need.currentAmount,
-                                                        need.targetAmount
-                                                    )}
+                                                        need.amount
+                                                    )}{" "}
                                                     % of{" "}
                                                     {formatCurrency(
-                                                        need.targetAmount
-                                                    )}
+                                                        need.amount
+                                                    )}{" "}
+                                                    {/* Using 'amount' from your object */}
                                                 </span>
                                             </div>
                                             <Progress
                                                 value={getProgress(
                                                     need.currentAmount,
-                                                    need.targetAmount
+                                                    need.amount
                                                 )}
                                                 className="h-2"
                                             />
@@ -545,17 +552,18 @@ const BrowseNeeds = () => {
                                             <div className="flex items-center space-x-1">
                                                 <Users className="w-4 h-4" />
                                                 <span>
-                                                    {need.donationsCount || 0}{" "}
-                                                    donors
+                                                    {need.donations?.length ||
+                                                        0}{" "}
+                                                    donors{" "}
+                                                    {/* Using donations array length */}
                                                 </span>
                                             </div>
                                             <Badge
                                                 variant="secondary"
                                                 className="text-xs"
                                             >
-                                                {getCategoryLabel(
-                                                    need.category
-                                                )}
+                                                {need.category}{" "}
+                                                {/* Direct category from your object */}
                                             </Badge>
                                         </div>
 

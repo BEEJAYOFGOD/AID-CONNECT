@@ -58,6 +58,8 @@ const History = () => {
             }
 
             const result = await response.json();
+
+            console.log(result);
             setData(result);
         } catch (err) {
             setError(err.message || "Failed to fetch dashboard statistics");
