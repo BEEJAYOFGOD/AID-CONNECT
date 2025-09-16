@@ -64,12 +64,116 @@ const CreateNeed = () => {
         }));
     };
 
+    const accessToken = localStorage.getItem("accessToken");
+    console.log(accessToken);
+
     // Upload file to Cloudinary
+    // const uploadToCloudinary = async (file) => {
+    //     const formData = new FormData();
+    //     formData.append("file", file);
+    //     formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+    //     formData.append("resource_type", "auto"); // auto detects file type
+
+    //     try {
+    //         const response = await fetch(
+    //             `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
+    //             {
+    //                 method: "POST",
+    //                 body: formData,
+    //             }
+    //         );
+
+    //         if (!response.ok) {
+    //             throw new Error("Upload failed");
+    //         }
+
+    //         const data = await response.json();
+    //         return data.secure_url;
+    //     } catch (error) {
+    //         console.error("Error uploading to Cloudinary:", error);
+    //         throw error;
+    //     }
+    // };
+
+    // const handleFileChange = async (e) => {
+    //     const file = e.target.files[0]; // Only get the first file
+    //     if (!file) return;
+
+    //     setIsUploading(true);
+
+    //     try {
+    //         // Show selected file immediately
+    //         setSupportingFile(file);
+
+    //         // Upload file to Cloudinary
+    //         const uploadedUrl = await uploadToCloudinary(file);
+
+    //         // Store the URL
+    //         setUploadedFileUrl(uploadedUrl);
+
+    //         toast({
+    //             title: "File uploaded successfully!",
+    //             description: "File uploaded to cloud storage.",
+    //         });
+    //     } catch (error) {
+    //         toast({
+    //             title: "Upload failed",
+    //             description: "Failed to upload file. Please try again.",
+    //             variant: "destructive",
+    //         });
+    //         // Remove failed file
+    //         setSupportingFile(null);
+    //     } finally {
+    //         setIsUploading(false);
+    //     }
+    // };
+
+    const handleFileChange = async (e) => {
+        console.log("handleFileChange called"); // Debug log
+        console.log("Files:", e.target.files); // Debug log
+
+        const file = e.target.files[0];
+        if (!file) {
+            console.log("No file selected");
+            return;
+        }
+
+        console.log("File selected:", file.name, file.size, file.type);
+
+        setIsUploading(true);
+
+        try {
+            setSupportingFile(file);
+            const uploadedUrl = await uploadToCloudinary(file);
+            setUploadedFileUrl(uploadedUrl);
+
+            toast({
+                title: "File uploaded successfully!",
+                description: "File uploaded to cloud storage.",
+            });
+        } catch (error) {
+            console.error("Upload error:", error);
+            toast({
+                title: "Upload failed",
+                description: "Failed to upload file. Please try again.",
+                variant: "destructive",
+            });
+            setSupportingFile(null);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+    // Improved Cloudinary upload function
     const uploadToCloudinary = async (file) => {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-        formData.append("resource_type", "auto"); // auto detects file type
+        formData.append("resource_type", "auto");
+
+        console.log(
+            "Uploading to:",
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`
+        );
 
         try {
             const response = await fetch(
@@ -80,48 +184,22 @@ const CreateNeed = () => {
                 }
             );
 
+            console.log("Response status:", response.status);
+
             if (!response.ok) {
-                throw new Error("Upload failed");
+                const errorText = await response.text();
+                console.error("Cloudinary error response:", errorText);
+                throw new Error(
+                    `Upload failed: ${response.status} - ${errorText}`
+                );
             }
 
             const data = await response.json();
+            console.log("Cloudinary response:", data);
             return data.secure_url;
         } catch (error) {
             console.error("Error uploading to Cloudinary:", error);
             throw error;
-        }
-    };
-
-    const handleFileChange = async (e) => {
-        const file = e.target.files[0]; // Only get the first file
-        if (!file) return;
-
-        setIsUploading(true);
-
-        try {
-            // Show selected file immediately
-            setSupportingFile(file);
-
-            // Upload file to Cloudinary
-            const uploadedUrl = await uploadToCloudinary(file);
-
-            // Store the URL
-            setUploadedFileUrl(uploadedUrl);
-
-            toast({
-                title: "File uploaded successfully!",
-                description: "File uploaded to cloud storage.",
-            });
-        } catch (error) {
-            toast({
-                title: "Upload failed",
-                description: "Failed to upload file. Please try again.",
-                variant: "destructive",
-            });
-            // Remove failed file
-            setSupportingFile(null);
-        } finally {
-            setIsUploading(false);
         }
     };
 
@@ -168,6 +246,8 @@ const CreateNeed = () => {
         e.preventDefault();
         setIsLoading(true);
 
+        console.log(submissionData);
+
         // Basic validation
         if (
             !formData.title ||
@@ -202,13 +282,15 @@ const CreateNeed = () => {
             amount: parseFloat(formData.amount),
         };
 
+        console.log(submissionData);
+
         try {
             const response = await fetch(`${root_url}/request`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     // Add authorization header if needed
-                    // 'Authorization': `Bearer ${yourAuthToken}`,
+                    Authorization: `Bearer ${accessToken}`,
                 },
                 body: JSON.stringify(submissionData),
             });
@@ -331,10 +413,12 @@ const CreateNeed = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <Label htmlFor="amount">
-                                        Amount Needed (USD) *
+                                        Amount Needed (NGN) *
                                     </Label>
                                     <div className="relative">
-                                        <p className="text-3xl font-bold">₦</p>
+                                        <p className="font-bold absolute left-3 top-24">
+                                            ₦
+                                        </p>
                                         <Input
                                             id="amount"
                                             name="amount"
@@ -433,19 +517,15 @@ const CreateNeed = () => {
                                         Medical bill, school fee receipt, rent
                                         notice, or other relevant document
                                     </p>
-                                    <Input
-                                        type="file"
-                                        accept="image/*,.pdf,.doc,.docx"
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                        id="file-upload"
-                                        disabled={isUploading}
-                                    />
+
                                     <Label
                                         htmlFor="file-upload"
-                                        className="cursor-pointer"
+                                        className="cursor-pointer bg-green-500 px-4 py-1 text-white rounded-md"
                                     >
-                                        <Button
+                                        {/* <Button
+                                            onClick={() => {
+                                                console.log("ademola");
+                                            }}
                                             type="button"
                                             variant="outline"
                                             className="mt-2"
@@ -464,7 +544,16 @@ const CreateNeed = () => {
                                             ) : (
                                                 "Choose File"
                                             )}
-                                        </Button>
+                                        </Button> */}
+                                        <Input
+                                            type="file"
+                                            accept="image/*,.pdf,.doc,.docx"
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                            id="file-upload"
+                                            disabled={isUploading}
+                                        />
+                                        Upload your document
                                     </Label>
                                 </div>
                             </div>
