@@ -29,8 +29,6 @@ const Dashboard = () => {
 
     const { user, logout, root_url } = useAuth();
 
-    // Get root URL from environment or config
-
     const handleLogout = () => {
         logout();
         navigate("/");
@@ -44,9 +42,9 @@ const Dashboard = () => {
             const token = localStorage.getItem("accessToken");
             const acct_type = localStorage.getItem("acct_type");
 
-            if (!token || !acct_type) {
-                throw new Error("Authentication required");
-            }
+            // if (!token || !acct_type) {
+            //     throw new Error("Authentication required");
+            // }
 
             setUserRole(acct_type);
 
@@ -123,7 +121,7 @@ const Dashboard = () => {
                                     Total Donated
                                 </p>
                                 <p className="text-2xl font-bold text-foreground">
-                                    ${data.totalDonated || 0}
+                                    ${data?.totalDonated || 0}
                                 </p>
                             </div>
                             <DollarSign className="w-8 h-8 text-primary" />
@@ -138,7 +136,7 @@ const Dashboard = () => {
                                     Open Requests
                                 </p>
                                 <p className="text-2xl font-bold text-foreground">
-                                    {data.openCount || 0}
+                                    {data?.openCount || 0}
                                 </p>
                             </div>
                             <Clock className="w-8 h-8 text-accent" />
@@ -153,7 +151,7 @@ const Dashboard = () => {
                                     Fulfilled Requests
                                 </p>
                                 <p className="text-2xl font-bold text-foreground">
-                                    {data.fulfilledCount || 0}
+                                    {data?.fulfilledCount || 0}
                                 </p>
                             </div>
                             <TrendingUp className="w-8 h-8 text-primary-glow" />
@@ -165,13 +163,23 @@ const Dashboard = () => {
             {/* Recent Activity for Donor */}
             <div className="lg:col-span-2">
                 <Card className="border-0 shadow-soft">
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle>Recent Donation History</CardTitle>
+                        {data?.history && data.history.length > 3 && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigate("/history")}
+                                className="text-primary hover:text-primary/80"
+                            >
+                                View All
+                            </Button>
+                        )}
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {data.history && data.history.length > 0 ? (
-                                data.history.slice(0, 5).map((item, index) => (
+                            {data?.history && data.history.length > 0 ? (
+                                data.history.slice(0, 3).map((item, index) => (
                                     <div
                                         key={index}
                                         className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
@@ -225,9 +233,21 @@ const Dashboard = () => {
                                 ))
                             ) : (
                                 <div className="text-center py-8">
-                                    <p className="text-muted-foreground">
+                                    <HandHeart className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+                                    <p className="text-muted-foreground font-medium mb-2">
                                         No donation history yet
                                     </p>
+                                    <p className="text-sm text-muted-foreground mb-4">
+                                        Start making a difference by browsing
+                                        needs in your community
+                                    </p>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => navigate("/browse")}
+                                        className="mt-2"
+                                    >
+                                        Browse Needs
+                                    </Button>
                                 </div>
                             )}
                         </div>
@@ -250,7 +270,7 @@ const Dashboard = () => {
                                     Total Received
                                 </p>
                                 <p className="text-2xl font-bold text-foreground">
-                                    ${data.totalDonationsSum || 0}
+                                    ${data?.totalDonationsSum || 0}
                                 </p>
                             </div>
                             <DollarSign className="w-8 h-8 text-primary" />
@@ -265,7 +285,7 @@ const Dashboard = () => {
                                     Total Donations
                                 </p>
                                 <p className="text-2xl font-bold text-foreground">
-                                    {data.totalDonationsCount || 0}
+                                    {data?.totalDonationsCount || 0}
                                 </p>
                             </div>
                             <Users className="w-8 h-8 text-accent" />
@@ -280,7 +300,7 @@ const Dashboard = () => {
                                     Active Donations
                                 </p>
                                 <p className="text-2xl font-bold text-foreground">
-                                    {data.activeDonationsCount || 0}
+                                    {data?.activeDonationsCount || 0}
                                 </p>
                             </div>
                             <TrendingUp className="w-8 h-8 text-primary-glow" />
@@ -292,65 +312,93 @@ const Dashboard = () => {
             {/* Recent Activity for Recipient */}
             <div className="lg:col-span-2">
                 <Card className="border-0 shadow-soft">
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle>Recent Donations Received</CardTitle>
+                        {data?.recentDonations &&
+                            data.recentDonations.length > 3 && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => navigate("/history")}
+                                    className="text-primary hover:text-primary/80"
+                                >
+                                    View All
+                                </Button>
+                            )}
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {data.recentDonations &&
+                            {data?.recentDonations &&
                             data.recentDonations.length > 0 ? (
-                                data.recentDonations.map((donation, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                                    >
-                                        <div className="flex items-center space-x-4">
-                                            <Avatar>
-                                                <AvatarFallback>
-                                                    {donation.donor
-                                                        ? donation.donor
-                                                              .split(" ")
-                                                              .map((n) => n[0])
-                                                              .join("")
-                                                        : "A"}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <h4 className="font-medium text-foreground">
-                                                    Donation from{" "}
-                                                    {donation.donor ||
-                                                        "Anonymous"}
-                                                </h4>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {donation.message ||
-                                                        "Thank you for your generosity"}
-                                                </p>
-                                                <div className="flex items-center space-x-2 mt-1">
-                                                    <Badge variant="default">
-                                                        Received
-                                                    </Badge>
+                                data.recentDonations
+                                    .slice(0, 3)
+                                    .map((donation, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                                        >
+                                            <div className="flex items-center space-x-4">
+                                                <Avatar>
+                                                    <AvatarFallback>
+                                                        {donation.donor
+                                                            ? donation.donor
+                                                                  .split(" ")
+                                                                  .map(
+                                                                      (n) =>
+                                                                          n[0]
+                                                                  )
+                                                                  .join("")
+                                                            : "A"}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <h4 className="font-medium text-foreground">
+                                                        Donation from{" "}
+                                                        {donation.donor ||
+                                                            "Anonymous"}
+                                                    </h4>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {donation.message ||
+                                                            "Thank you for your generosity"}
+                                                    </p>
+                                                    <div className="flex items-center space-x-2 mt-1">
+                                                        <Badge variant="default">
+                                                            Received
+                                                        </Badge>
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <div className="text-right">
+                                                <p className="font-semibold text-foreground">
+                                                    ${donation.amount || 0}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {donation.date
+                                                        ? new Date(
+                                                              donation.date
+                                                          ).toLocaleDateString()
+                                                        : ""}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="font-semibold text-foreground">
-                                                ${donation.amount || 0}
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {donation.date
-                                                    ? new Date(
-                                                          donation.date
-                                                      ).toLocaleDateString()
-                                                    : ""}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))
+                                    ))
                             ) : (
                                 <div className="text-center py-8">
-                                    <p className="text-muted-foreground">
+                                    <Heart className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+                                    <p className="text-muted-foreground font-medium mb-2">
                                         No donations received yet
                                     </p>
+                                    <p className="text-sm text-muted-foreground mb-4">
+                                        Share your story and create a request to
+                                        start receiving support
+                                    </p>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => navigate("/create-need")}
+                                        className="mt-2"
+                                    >
+                                        Create Request
+                                    </Button>
                                 </div>
                             )}
                         </div>
@@ -358,6 +406,98 @@ const Dashboard = () => {
                 </Card>
             </div>
         </>
+    );
+
+    // Summary Dashboard Component for when data exists but might be minimal
+    const SummaryDashboard = ({ data, role }) => (
+        <div className="">
+            <Card className="border-0 shadow-soft">
+                <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                        <TrendingUp className="w-5 h-5 text-primary" />
+                        <span>Dashboard Summary</span>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        {role === "donor" ? (
+                            <>
+                                <div className="text-center p-4 border rounded-lg">
+                                    <DollarSign className="w-8 h-8 text-primary mx-auto mb-2" />
+                                    <p className="text-2xl font-bold text-foreground">
+                                        ${data?.totalDonated || 0}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Total Donated
+                                    </p>
+                                </div>
+                                <div className="text-center p-4 border rounded-lg">
+                                    <Users className="w-8 h-8 text-accent mx-auto mb-2" />
+                                    <p className="text-2xl font-bold text-foreground">
+                                        {(data?.openCount || 0) +
+                                            (data?.fulfilledCount || 0)}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Total Requests Supported
+                                    </p>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="text-center p-4 border rounded-lg">
+                                    <DollarSign className="w-8 h-8 text-primary mx-auto mb-2" />
+                                    <p className="text-2xl font-bold text-foreground">
+                                        ${data?.totalDonationsSum || 0}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Total Received
+                                    </p>
+                                </div>
+                                <div className="text-center p-4 border rounded-lg">
+                                    <Users className="w-8 h-8 text-accent mx-auto mb-2" />
+                                    <p className="text-2xl font-bold text-foreground">
+                                        {data?.totalDonationsCount || 0}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Total Donations
+                                    </p>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    <div className="text-center py-6 border-t">
+                        <p className="text-muted-foreground mb-4">
+                            {role === "donor"
+                                ? "Ready to make a difference? Browse needs in your community."
+                                : "Share your story and connect with generous donors."}
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                            <Button
+                                onClick={() =>
+                                    navigate(
+                                        role === "donor"
+                                            ? "/browse"
+                                            : "/create-need"
+                                    )
+                                }
+                                className="bg-gradient-to-r from-primary to-primary-glow hover:opacity-90"
+                            >
+                                {role === "donor"
+                                    ? "Browse Needs"
+                                    : "Create Request"}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => navigate("/history")}
+                            >
+                                View History
+                            </Button>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     );
 
     if (loading) {
@@ -471,7 +611,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Dashboard Content */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1  gap-8">
                     {/* Quick Actions Panel */}
                     <div className="lg:col-span-1">
                         <Card className="border-0 shadow-soft">
@@ -512,23 +652,31 @@ const Dashboard = () => {
                     </div>
 
                     {/* Dashboard Stats and Content */}
-                    <div className="lg:col-span-2">
-                        {dashboardData ? (
+                    {dashboardData ? (
+                        // Check if we have detailed data (history/recentDonations with content)
+                        (userRole === "donor" &&
+                            dashboardData.history &&
+                            dashboardData.history.length > 0) ||
+                        (userRole === "recipient" &&
+                            dashboardData.recentDonations &&
+                            dashboardData.recentDonations.length > 0) ? (
+                            // Show full dashboard with history
                             userRole === "donor" ? (
                                 <DonorDashboard data={dashboardData} />
                             ) : (
                                 <RecipientDashboard data={dashboardData} />
                             )
                         ) : (
-                            <Card className="border-0 shadow-soft">
-                                <CardContent className="p-8 text-center">
-                                    <p className="text-muted-foreground">
-                                        No data available
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        )}
-                    </div>
+                            // Show summary dashboard when we have data but no history
+                            <SummaryDashboard
+                                data={dashboardData}
+                                role={userRole}
+                            />
+                        )
+                    ) : (
+                        // Fallback for truly no data (shouldn't happen if API is working)
+                        <SummaryDashboard data={{}} role={userRole} />
+                    )}
                 </div>
             </main>
         </div>
