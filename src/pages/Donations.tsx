@@ -22,13 +22,9 @@ const DonationsPage = () => {
 
     const { accessToken } = useAuth();
 
-    console.log(accessToken);
-
     const fetchDonations = async (page = currentPage, pageLimit = limit) => {
         setLoading(true);
         setError(null);
-
-        console.log(accessToken);
 
         const accessToken = localStorage.getItem("accessToken");
         const headers = {

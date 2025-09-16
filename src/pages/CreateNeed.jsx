@@ -33,7 +33,7 @@ const CreateNeed = () => {
         description: "",
         amount: "",
         category: "",
-        urgent: false,
+
         location: "",
     });
     const [supportingFile, setSupportingFile] = useState(null); // Changed to single file
@@ -219,7 +219,6 @@ const CreateNeed = () => {
                 "My mother has been diagnosed with a critical heart condition that requires immediate surgery. The medical bills are overwhelming our family finances, and we urgently need community support. The surgery costs ₦15,000, and we have exhausted all our savings. Any contribution would help save her life and give our family hope during this difficult time.",
             amount: "15000",
             category: "health",
-            urgent: true,
             location: "Lagos, Nigeria",
         });
 
@@ -245,8 +244,6 @@ const CreateNeed = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-
-        console.log(submissionData);
 
         // Basic validation
         if (
@@ -278,7 +275,7 @@ const CreateNeed = () => {
         // Prepare submission data
         const submissionData = {
             ...formData,
-            supportingDocument: uploadedFileUrl, // Single URL instead of array
+            document_url: uploadedFileUrl, // Single URL instead of array
             amount: parseFloat(formData.amount),
         };
 
@@ -289,11 +286,14 @@ const CreateNeed = () => {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    // Add authorization header if needed
                     Authorization: `Bearer ${accessToken}`,
                 },
                 body: JSON.stringify(submissionData),
             });
+
+            console.log("Status:", response.status);
+
+            console.log("ade");
 
             if (!response.ok) {
                 throw new Error("Submission failed");
@@ -474,7 +474,7 @@ const CreateNeed = () => {
                             </div>
 
                             <div className="flex items-center space-x-2">
-                                <Checkbox
+                                {/* <Checkbox
                                     id="urgent"
                                     checked={formData.urgent}
                                     onCheckedChange={(checked) =>
@@ -483,14 +483,14 @@ const CreateNeed = () => {
                                             urgent: checked,
                                         }))
                                     }
-                                />
-                                <Label
+                                /> */}
+                                {/* <Label
                                     htmlFor="urgent"
                                     className="flex items-center space-x-2"
                                 >
                                     <AlertTriangle className="w-4 h-4 text-orange-500" />
                                     <span>This is an urgent request</span>
-                                </Label>
+                                </Label> */}
                             </div>
                         </CardContent>
                     </Card>
