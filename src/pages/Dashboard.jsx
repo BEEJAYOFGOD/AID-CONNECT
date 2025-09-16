@@ -121,7 +121,7 @@ const Dashboard = () => {
                                     Total Donated
                                 </p>
                                 <p className="text-2xl font-bold text-foreground">
-                                    ${data?.totalDonated || 0}
+                                    ₦{data?.totalDonated || 0}
                                 </p>
                             </div>
                             <DollarSign className="w-8 h-8 text-primary" />
@@ -219,7 +219,7 @@ const Dashboard = () => {
                                         </div>
                                         <div className="text-right">
                                             <p className="font-semibold text-foreground">
-                                                ${item.amount || 0}
+                                                ₦{item.amount || 0}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
                                                 {item.date
@@ -270,7 +270,7 @@ const Dashboard = () => {
                                     Total Received
                                 </p>
                                 <p className="text-2xl font-bold text-foreground">
-                                    ${data?.totalDonationsSum || 0}
+                                    ₦{data?.totalDonationsSum || 0}
                                 </p>
                             </div>
                             <DollarSign className="w-8 h-8 text-primary" />
@@ -370,7 +370,7 @@ const Dashboard = () => {
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-semibold text-foreground">
-                                                    ${donation.amount || 0}
+                                                    ₦{donation.amount || 0}
                                                 </p>
                                                 <p className="text-sm text-muted-foreground">
                                                     {donation.date
@@ -425,7 +425,7 @@ const Dashboard = () => {
                                 <div className="text-center p-4 border rounded-lg">
                                     <DollarSign className="w-8 h-8 text-primary mx-auto mb-2" />
                                     <p className="text-2xl font-bold text-foreground">
-                                        ${data?.totalDonated || 0}
+                                        ₦{data?.totalDonated || 0}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
                                         Total Donated
@@ -447,7 +447,7 @@ const Dashboard = () => {
                                 <div className="text-center p-4 border rounded-lg">
                                     <DollarSign className="w-8 h-8 text-primary mx-auto mb-2" />
                                     <p className="text-2xl font-bold text-foreground">
-                                        ${data?.totalDonationsSum || 0}
+                                        ₦{data?.totalDonationsSum || 0}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
                                         Total Received

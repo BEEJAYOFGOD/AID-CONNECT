@@ -22,13 +22,29 @@ const DonationsPage = () => {
 
     const { accessToken } = useAuth();
 
+    console.log(accessToken);
+
     const fetchDonations = async (page = currentPage, pageLimit = limit) => {
         setLoading(true);
         setError(null);
 
+        console.log(accessToken);
+
+        const accessToken = localStorage.getItem("accessToken");
+        const headers = {
+            Authorization: `Bearer ${accessToken}`, // add your token here
+            "Content-Type": "application/json",
+        };
+
+        console.log(accessToken);
+
         try {
             const response = await fetch(
-                `/${root_url}/request/donations?page=${page}&limit=${pageLimit}`
+                `${root_url}/request/donations?page=${page}&limit=${pageLimit}`,
+                {
+                    method: "GET",
+                    headers: headers,
+                }
             );
 
             if (!response.ok) {
@@ -47,6 +63,7 @@ const DonationsPage = () => {
             );
             setCurrentPage(page);
         } catch (err) {
+            console.log(err);
             setError(err.message || "Failed to fetch donations");
             setDonations([]);
         } finally {
