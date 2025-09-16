@@ -81,7 +81,6 @@ const Index = () => {
                         <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
                             Transparent Giving Through
                             <span className="bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-                                {" "}
                                 Blockchain
                             </span>
                         </h1>
@@ -157,7 +156,7 @@ const Index = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                         <div>
                             <div className="text-4xl font-bold text-primary mb-2">
-                                $2.5M+
+                                ₦2.5M+
                             </div>
                             <p className="text-muted-foreground">
                                 Total Donations

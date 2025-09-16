@@ -15,6 +15,7 @@ import PageTitle from "./components/PageTitle";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DonationsPage from "@/pages/Donations";
 import History from "./pages/History";
+import Profile from "./pages/Profile";
 // import OTPVerification from "./auth/OtpVerification";
 
 const queryClient = new QueryClient();
@@ -77,6 +78,14 @@ const App = () => (
                             element={
                                 <ProtectedRoute>
                                     <CreateNeed />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/profile"
+                            element={
+                                <ProtectedRoute>
+                                    <Profile />
                                 </ProtectedRoute>
                             }
                         />

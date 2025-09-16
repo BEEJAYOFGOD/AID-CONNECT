@@ -26,8 +26,10 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
-
     const { user, logout, root_url } = useAuth();
+
+    const name = JSON.parse(localStorage.getItem("authData"));
+    const userName = name.data.name;
 
     const handleLogout = () => {
         logout();
@@ -600,8 +602,7 @@ const Dashboard = () => {
                 {/* Welcome Section */}
                 <div className="mb-8">
                     <h2 className="text-3xl font-bold text-foreground mb-2">
-                        Welcome back,{" "}
-                        {userRole === "donor" ? "Donor" : "Recipient"}!
+                        Welcome back, {`${userName}`}
                     </h2>
                     <p className="text-muted-foreground">
                         {userRole === "donor"

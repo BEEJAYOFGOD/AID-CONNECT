@@ -138,7 +138,7 @@ const CreateNeed = () => {
         setFormData({
             title: "Emergency Surgery for My Mother",
             description:
-                "My mother has been diagnosed with a critical heart condition that requires immediate surgery. The medical bills are overwhelming our family finances, and we urgently need community support. The surgery costs $15,000, and we have exhausted all our savings. Any contribution would help save her life and give our family hope during this difficult time.",
+                "My mother has been diagnosed with a critical heart condition that requires immediate surgery. The medical bills are overwhelming our family finances, and we urgently need community support. The surgery costs ₦15,000, and we have exhausted all our savings. Any contribution would help save her life and give our family hope during this difficult time.",
             amount: "15000",
             category: "health",
             urgent: true,
@@ -188,7 +188,7 @@ const CreateNeed = () => {
         if (parseFloat(formData.amount) <= 0) {
             toast({
                 title: "Invalid amount",
-                description: "Please enter a valid amount greater than $0.",
+                description: "Please enter a valid amount greater than ₦0.",
                 variant: "destructive",
             });
             setIsLoading(false);
@@ -334,7 +334,7 @@ const CreateNeed = () => {
                                         Amount Needed (USD) *
                                     </Label>
                                     <div className="relative">
-                                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                        <p className="text-3xl font-bold">₦</p>
                                         <Input
                                             id="amount"
                                             name="amount"
