@@ -125,6 +125,9 @@ const Signup = () => {
 
             const controller = new AbortController();
 
+            // Set timeout for the request
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
             const response = await fetch(`${root_url}/auth/sign-up`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -132,14 +135,17 @@ const Signup = () => {
                 signal: controller.signal,
             });
 
+            // Clear the timeout since request completed
+            clearTimeout(timeoutId);
+
+            // ===== Parse Response =====
             let data;
             try {
-                data = await response;
-
-                console.log(data);
+                // FIX: Parse response as JSON, not just assign response object
+                data = await response.json();
+                console.log("Parsed response data:", data);
             } catch (parseError) {
                 console.error("Failed to parse response:", parseError);
-                console.log(parseError);
                 toast({
                     title: "Server Error",
                     description:
@@ -197,17 +203,30 @@ const Signup = () => {
                 description: "Welcome to GiveTrust! You are now logged in.",
             });
 
-            // Store user data for authentication
+            // FIX: Store the actual response data, not just the email
             localStorage.setItem("userEmail", formData.email);
             localStorage.setItem("authData", JSON.stringify(data));
             localStorage.setItem("isAuthenticated", "true");
+
+            // FIX: If your API returns a token, store it
+            if (data.token || data.access_token) {
+                localStorage.setItem("accessToken", data?.jwt_secret);
+            }
+
+            // FIX: If your API returns user info, store it
+            if (data.user) {
+                localStorage.setItem("userData", JSON.stringify(data.user));
+            }
 
             // Clear any previous session data
             sessionStorage.removeItem("isLogin");
             sessionStorage.removeItem("userEmail");
             sessionStorage.removeItem("authData");
 
-            navigate("/"); // redirect to main app
+            // FIX: Navigate after a brief delay to ensure state updates
+            setTimeout(() => {
+                navigate("/dashboard"); // or wherever you want to redirect
+            }, 100);
         } catch (error) {
             console.error("Signup error:", error);
 
