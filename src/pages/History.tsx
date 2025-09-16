@@ -254,10 +254,10 @@ const History = () => {
                                                 </div>
                                             )}
 
-                                            {donation.recipient && (
+                                            {donation.requester && (
                                                 <div className="flex items-center">
                                                     <User className="h-4 w-4 mr-1" />
-                                                    {donation.recipient}
+                                                    {donation.requester}
                                                 </div>
                                             )}
 
@@ -457,7 +457,7 @@ const History = () => {
                                 <TrendingUp className="h-8 w-8 text-blue-500 mr-3" />
                                 {userType === "donor"
                                     ? "Donor Dashboard"
-                                    : "Recipient Dashboard"}
+                                    : "Requester Dashboard"}
                             </h1>
                             <p className="text-gray-600 mt-2">
                                 {userType === "donor"
@@ -499,7 +499,7 @@ const History = () => {
                             : renderRecipientStats()}
 
                         {/* Summary Card for Recipients */}
-                        {userType === "recipient" && (
+                        {userType === "requester" && (
                             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                                     Summary

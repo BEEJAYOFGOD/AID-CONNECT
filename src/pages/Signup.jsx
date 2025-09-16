@@ -79,7 +79,7 @@ const Signup = () => {
                 toast({
                     title: "Role required",
                     description:
-                        "Please select whether you want to be a donor or recipient.",
+                        "Please select whether you want to be a donor or requester",
                     variant: "destructive",
                 });
                 return;
@@ -138,106 +138,213 @@ const Signup = () => {
             // Clear the timeout since request completed
             clearTimeout(timeoutId);
 
+            console.log("Response status:", response.status);
+            console.log("Response ok:", response.ok);
+
             // ===== Parse Response =====
             let data;
+            const contentType = response.headers.get("content-type");
+
             try {
-                // FIX: Parse response as JSON, not just assign response object
-                data = await response.json();
-                console.log("Parsed response data:", data);
+                // Only try to parse JSON if we actually got JSON content
+                if (contentType && contentType.includes("application/json")) {
+                    data = await response.json();
+                    console.log("Parsed response data:", data);
+                } else {
+                    // If it's not JSON, get the text content for debugging
+                    const responseText = await response.text();
+                    console.log("Non-JSON response received:", responseText);
+
+                    // Check if this looks like a CORS error (HTML response when expecting JSON)
+                    if (
+                        responseText.includes("<!DOCTYPE") ||
+                        responseText.includes("<html")
+                    ) {
+                        throw new Error("CORS_ERROR");
+                    }
+
+                    // Try to create a minimal data object for error handling
+                    data = { message: "Invalid response format received" };
+                }
             } catch (parseError) {
                 console.error("Failed to parse response:", parseError);
+
+                // Handle specific CORS/HTML response case
+                if (
+                    parseError.message === "CORS_ERROR" ||
+                    parseError.message.includes("Unexpected token '<'")
+                ) {
+                    toast({
+                        title: "Connection Error",
+                        description:
+                            "Unable to connect to the server. This might be a CORS issue or server misconfiguration. Please contact support.",
+                        variant: "destructive",
+                    });
+
+                    // DON'T redirect, just return and stay on signup page
+                    return;
+                }
+
+                // For other JSON parsing errors
                 toast({
                     title: "Server Error",
                     description:
                         "Received invalid response from server. Please try again.",
                     variant: "destructive",
                 });
+
+                // DON'T redirect, just return and stay on signup page
                 return;
             }
 
-            console.log("Signup response:", data);
-
             // ===== Error Handling =====
             if (!response.ok) {
+                console.log("Signup failed with status:", response.status);
+
                 let errorMessage = "Something went wrong during signup";
 
+                // Handle specific error cases
                 switch (response.status) {
                     case 400:
                         errorMessage =
-                            data.message ||
+                            data?.message ||
                             "Invalid input. Please check your information.";
+                        break;
+                    case 401:
+                        errorMessage =
+                            data?.message || "Authentication failed.";
                         break;
                     case 409:
                         errorMessage =
-                            data.message ||
+                            data?.message ||
                             "An account with this email already exists.";
                         break;
                     case 422:
                         errorMessage =
-                            data.message ||
+                            data?.message ||
                             "Please check your input and try again.";
+                        break;
+                    case 429:
+                        errorMessage =
+                            "Too many requests. Please wait and try again.";
                         break;
                     case 500:
                         errorMessage = "Server error. Please try again later.";
+                        break;
+                    case 502:
+                    case 503:
+                    case 504:
+                        errorMessage =
+                            "Server is temporarily unavailable. Please try again later.";
                         break;
                     default:
                         if (response.status >= 500) {
                             errorMessage =
                                 "Server is currently unavailable. Please try again later.";
-                        } else {
-                            errorMessage = data.message || errorMessage;
+                        } else if (response.status >= 400) {
+                            errorMessage =
+                                data?.message ||
+                                `Request failed with status ${response.status}`;
                         }
                 }
 
+                console.error("Signup error:", errorMessage);
+
                 toast({
-                    title: "Signup failed",
+                    title: "Signup Failed",
                     description: errorMessage,
                     variant: "destructive",
                 });
                 return;
             }
 
-            // ===== Success =====
+            // ===== SUCCESS HANDLING =====
+            console.log("Signup successful! Response data:", data);
+
             toast({
                 title: "Account created successfully!",
                 description: "Welcome to GiveTrust! You are now logged in.",
+                variant: "default", // success variant
             });
 
-            // FIX: Store the actual response data, not just the email
-            localStorage.setItem("userEmail", formData.email);
-            localStorage.setItem("authData", JSON.stringify(data));
-            localStorage.setItem("isAuthenticated", "true");
+            // Store authentication data
+            try {
+                localStorage.setItem("userEmail", formData.email.trim());
+                localStorage.setItem("authData", JSON.stringify(data));
+                localStorage.setItem("isAuthenticated", "true");
 
-            // FIX: If your API returns a token, store it
-            if (data.token || data.access_token) {
-                localStorage.setItem("accessToken", data?.jwt_secret);
+                // Store account type for dashboard logic
+                localStorage.setItem("acct_type", formData.role.trim());
+
+                // Store token - check various possible token field names
+                const token =
+                    data.token ||
+                    data.access_token ||
+                    data.jwt_secret ||
+                    data.accessToken;
+                if (token) {
+                    localStorage.setItem("accessToken", token);
+                    console.log("Access token stored");
+                } else {
+                    console.warn("No access token found in response");
+                }
+
+                // Store user data if available
+                if (data.user) {
+                    localStorage.setItem("userData", JSON.stringify(data.user));
+                } else if (data.data?.user) {
+                    localStorage.setItem(
+                        "userData",
+                        JSON.stringify(data.data.user)
+                    );
+                }
+
+                // Clear any previous session data
+                sessionStorage.removeItem("isLogin");
+                sessionStorage.removeItem("userEmail");
+                sessionStorage.removeItem("authData");
+
+                console.log("Authentication data stored successfully");
+            } catch (storageError) {
+                console.error(
+                    "Failed to store authentication data:",
+                    storageError
+                );
+                toast({
+                    title: "Warning",
+                    description:
+                        "Account created but there was an issue saving login data. Please try logging in manually.",
+                    variant: "destructive",
+                });
             }
 
-            // FIX: If your API returns user info, store it
-            if (data.user) {
-                localStorage.setItem("userData", JSON.stringify(data.user));
-            }
-
-            // Clear any previous session data
-            sessionStorage.removeItem("isLogin");
-            sessionStorage.removeItem("userEmail");
-            sessionStorage.removeItem("authData");
-
-            // FIX: Navigate after a brief delay to ensure state updates
+            // Navigate to dashboard after a brief delay
             setTimeout(() => {
-                navigate("/dashboard"); // or wherever you want to redirect
-            }, 100);
+                console.log("Redirecting to dashboard...");
+                navigate("/dashboard");
+            }, 1000); // Increased delay to show success message
         } catch (error) {
             console.error("Signup error:", error);
 
             let errorMessage =
                 "An unexpected error occurred. Please try again.";
+            let shouldRedirect = false; // Flag to control redirection
 
+            // Handle different types of errors
             if (error.name === "TypeError" && error.message.includes("fetch")) {
                 errorMessage =
                     "Network error. Please check your internet connection and try again.";
             } else if (error.name === "AbortError") {
                 errorMessage = "Request timed out. Please try again.";
+            } else if (
+                error.message.includes("CORS") ||
+                error.message === "CORS_ERROR"
+            ) {
+                errorMessage =
+                    "Connection blocked by security policy. Please contact support or try again later.";
+            } else if (error.message.includes("Failed to fetch")) {
+                errorMessage =
+                    "Unable to connect to the server. Please check your connection and try again.";
             } else if (error.message) {
                 errorMessage = `Error: ${error.message}`;
             }
@@ -247,6 +354,14 @@ const Signup = () => {
                 description: errorMessage,
                 variant: "destructive",
             });
+
+            // Only redirect for specific critical errors, not CORS/network issues
+            if (shouldRedirect) {
+                setTimeout(() => {
+                    navigate("/");
+                }, 3000);
+            }
+            // Otherwise, stay on the signup page so user can try again
         } finally {
             setIsLoading(false);
         }
@@ -313,11 +428,11 @@ const Signup = () => {
                                         onClick={() =>
                                             setFormData({
                                                 ...formData,
-                                                role: "recipient",
+                                                role: "requester",
                                             })
                                         }
                                         className={`p-4 border rounded-lg text-left transition-all ${
-                                            formData.role === "recipient"
+                                            formData.role === "requester"
                                                 ? "border-primary bg-primary/5"
                                                 : "border-border hover:border-primary/50"
                                         }`}

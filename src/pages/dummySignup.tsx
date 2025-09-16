@@ -278,11 +278,11 @@ const Signup = () => {
                                         onClick={() =>
                                             setFormData({
                                                 ...formData,
-                                                role: "recipient",
+                                                role: "requester",
                                             })
                                         }
                                         className={`p-4 border rounded-lg text-left transition-all ${
-                                            formData.role === "recipient"
+                                            formData.role === "requester"
                                                 ? "border-primary bg-primary/5"
                                                 : "border-border hover:border-primary/50"
                                         }`}

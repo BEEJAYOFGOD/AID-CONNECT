@@ -187,8 +187,8 @@ const Dashboard = () => {
                                         <div className="flex items-center space-x-4">
                                             <Avatar>
                                                 <AvatarFallback>
-                                                    {item.recipient
-                                                        ? item.recipient
+                                                    {item.requester
+                                                        ? item.requester
                                                               .split(" ")
                                                               .map((n) => n[0])
                                                               .join("")
@@ -200,7 +200,7 @@ const Dashboard = () => {
                                                     {item.title || "Donation"}
                                                 </h4>
                                                 <p className="text-sm text-muted-foreground">
-                                                    {item.recipient ||
+                                                    {item.requester ||
                                                         "Anonymous"}
                                                 </p>
                                                 <div className="flex items-center space-x-2 mt-1">
@@ -524,7 +524,7 @@ const Dashboard = () => {
                                 <Heart className="w-6 h-6 text-primary-foreground" />
                             </div>
                             <h1 className="text-2xl font-bold text-foreground">
-                                GiveTrust
+                                AIDCONNECT
                             </h1>
                         </div>
 
@@ -543,7 +543,7 @@ const Dashboard = () => {
                                     ? "Browse Needs"
                                     : "Browse Donations"}
                             </Button>
-                            {userRole === "recipient" && (
+                            {userRole === "requester" && (
                                 <Button
                                     variant="ghost"
                                     onClick={() => navigate("/create-need")}
@@ -629,7 +629,7 @@ const Dashboard = () => {
                                     <Eye className="w-4 h-4 mr-2" />
                                     Browse All Needs
                                 </Button>
-                                {userRole === "recipient" && (
+                                {userRole === "requester" && (
                                     <Button
                                         variant="outline"
                                         className="w-full justify-start"
@@ -657,7 +657,7 @@ const Dashboard = () => {
                         (userRole === "donor" &&
                             dashboardData.history &&
                             dashboardData.history.length > 0) ||
-                        (userRole === "recipient" &&
+                        (userRole === "requester" &&
                             dashboardData.recentDonations &&
                             dashboardData.recentDonations.length > 0) ? (
                             // Show full dashboard with history

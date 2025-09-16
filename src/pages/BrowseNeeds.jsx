@@ -435,15 +435,15 @@ const BrowseNeeds = () => {
                                             <div className="flex items-center space-x-3">
                                                 <Avatar className="w-12 h-12">
                                                     <AvatarFallback className="bg-primary/10 text-primary">
-                                                        {need.recipient?.name
-                                                            ? need.recipient.name
+                                                        {need.requester?.name
+                                                            ? need.requester.name
                                                                   .split(" ")
                                                                   .map(
                                                                       (n) =>
                                                                           n[0]
                                                                   )
                                                                   .join("")
-                                                            : need.recipientName
+                                                            : need.requesterName
                                                                   ?.split(" ")
                                                                   .map(
                                                                       (n) =>
@@ -459,8 +459,8 @@ const BrowseNeeds = () => {
                                                     </h3>
                                                     <p className="text-sm text-muted-foreground">
                                                         by{" "}
-                                                        {need.recipient?.name ||
-                                                            need.recipientName ||
+                                                        {need.requester?.name ||
+                                                            need.requesterName ||
                                                             "Anonymous"}
                                                     </p>
                                                 </div>
