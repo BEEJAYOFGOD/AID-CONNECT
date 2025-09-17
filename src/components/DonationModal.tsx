@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
-import Modal from "../../src/components/Modal"; // Adjust import path as needed
+import { useState, useEffect, useRef } from "react";
+// Adjust import path as needed
 import { root_url } from "@/contexts/AuthContext";
+
+import Modal from "./Modal";
 
 const DonationModal = ({ need, onClose, isOpen }) => {
     const [currentStep, setCurrentStep] = useState(1);
