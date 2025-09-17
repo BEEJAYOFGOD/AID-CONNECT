@@ -1,60 +1,39 @@
-import React, { useState, useEffect } from "react";
-import {
-    ChevronLeft,
-    ChevronRight,
-    Wallet,
-    Check,
-    Loader,
-    AlertCircle,
-} from "lucide-react";
-import Modal from "@/components/modal";
+import { useState, useEffect } from "react";
+import Modal from "@/components/Modal"; // Adjust import path as needed
+import { root_url } from "@/contexts/AuthContext";
 
-const DonationModal: React.FC<DonationModalProps> = ({
-    need,
-    onClose,
-    rootUrl,
-    accessToken,
-    isOpen,
-}) => {
+const DonationModal = ({ need, onClose, isOpen }) => {
     const [currentStep, setCurrentStep] = useState(1);
+    const [networks, setNetworks] = useState([]);
     const [selectedNetwork, setSelectedNetwork] = useState("");
-    const [availableNetworks, setAvailableNetworks] = useState([]);
-    const [donationAmount, setDonationAmount] = useState("");
-    const [cryptoEquivalent, setCryptoEquivalent] = useState(null);
-    const [selectedWallet, setSelectedWallet] = useState("");
+    const [amount, setAmount] = useState("");
+    const [conversionData, setConversionData] = useState(null);
     const [transactionHash, setTransactionHash] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+    const [verificationResult, setVerificationResult] = useState(null);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [paymentVerified, setPaymentVerified] = useState(false);
+    const accessToken = localStorage.getItem("accessToken");
 
-    // Mock wallet options - you can customize these based on your needs
-    const walletOptions = [
-        { id: "metamask", name: "MetaMask", icon: "🦊" },
-        { id: "trustwallet", name: "Trust Wallet", icon: "🔷" },
-        { id: "binance", name: "Binance Wallet", icon: "🟡" },
-        { id: "coinbase", name: "Coinbase Wallet", icon: "🔵" },
-    ];
-
-    // Network display names
-    const networkNames = {
-        bsc: "bsc",
-        eth: "eth",
-        matic: "matic",
-        atc: "atc",
-        xbn: "xbn",
-        trx: "trx",
-    };
-
-    // Fetch available networks on component mount
+    // Reset state when modal opens
     useEffect(() => {
-        fetchAvailableNetworks();
-    }, []);
+        if (isOpen) {
+            setCurrentStep(1);
+            setSelectedNetwork("");
+            setAmount("");
+            setConversionData(null);
+            setTransactionHash("");
+            setVerificationResult(null);
+            setError("");
+            fetchNetworks();
+        }
+    }, [isOpen]);
 
-    const fetchAvailableNetworks = async () => {
-        setIsLoading(true);
+    // Fetch available networks
+    const fetchNetworks = async () => {
         try {
+            setLoading(true);
             const response = await fetch(
-                `${rootUrl}/payment/available-networks`,
+                `${root_url}/payment/available-networks`,
                 {
                     method: "GET",
                     headers: {
@@ -65,63 +44,67 @@ const DonationModal: React.FC<DonationModalProps> = ({
             );
 
             if (response.ok) {
-                const networks = await response.json();
-                setAvailableNetworks(networks);
+                const networkData = await response.json();
+                setNetworks(networkData);
             } else {
-                setError("Failed to fetch available networks");
+                setError("Failed to load networks");
             }
         } catch (err) {
-            setError("Network error occurred");
+            setError("Error fetching networks");
+            console.error(err);
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
-    const convertNairaToCrypto = async () => {
-        if (!donationAmount || !selectedNetwork) return;
+    // Convert amount to naira
+    const convertToNaira = async () => {
+        if (!amount || !selectedNetwork) return;
 
-        setIsLoading(true);
         try {
-            const response = await fetch(`${rootUrl}/payment/naira-to-crypto`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    amount: parseFloat(donationAmount),
-                    network: selectedNetwork,
-                }),
-            });
+            setLoading(true);
+            setError("");
 
-            console.log(
-                JSON.stringify({
-                    amount: parseFloat(donationAmount),
-                    network: selectedNetwork,
-                })
+            const response = await fetch(
+                `${root_url}/payment/naira-to-crypto`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        network: selectedNetwork,
+                        amount: parseFloat(amount),
+                    }),
+                }
             );
 
             if (response.ok) {
-                const result = await response.json();
-                console.log(result);
-                setCryptoEquivalent(result);
+                const data = await response.json();
+                setConversionData(data);
+                setCurrentStep(3);
             } else {
                 setError("Failed to convert amount");
             }
         } catch (err) {
-            setError("Conversion error occurred");
+            setError("Error converting amount");
+            console.error(err);
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
+    // Verify transaction
     const verifyTransaction = async () => {
-        if (!transactionHash) return;
+        if (!transactionHash || !need?.id) return;
 
-        setIsLoading(true);
         try {
+            setLoading(true);
+            setError("");
+
             const response = await fetch(
-                `${rootUrl}/request/verify-transaction/${need._id}/${transactionHash}/${selectedNetwork}`,
+                `${root_url}/request/verify-transaction/${need.id}/${transactionHash}/${selectedNetwork}`,
                 {
                     method: "POST",
                     headers: {
@@ -132,101 +115,107 @@ const DonationModal: React.FC<DonationModalProps> = ({
             );
 
             if (response.ok) {
-                setPaymentVerified(true);
-                setCurrentStep(4);
+                const data = await response.json();
+                setVerificationResult(data);
+                setCurrentStep(5); // Move to success step
             } else {
-                setError("Transaction verification failed");
+                const errorData = await response.json();
+                setError(errorData.message || "Failed to verify transaction");
             }
         } catch (err) {
-            setError("Verification error occurred");
+            setError("Error verifying transaction");
+            console.error(err);
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
-    const handleWalletConnect = (walletId) => {
-        setSelectedWallet(walletId);
-        // Mock transaction hash - in real implementation, this would come from wallet
-        const mockTxHash = "0x" + Math.random().toString(16).substr(2, 64);
-        setTransactionHash(mockTxHash);
-        verifyTransaction();
-    };
-
-    const nextStep = () => {
-        if (currentStep < 4) {
-            if (currentStep === 1 && selectedNetwork) {
-                setCurrentStep(2);
-            } else if (currentStep === 2 && donationAmount) {
-                setCurrentStep(3);
-            }
+    const handleNext = () => {
+        if (currentStep === 1 && selectedNetwork) {
+            setCurrentStep(2);
+        } else if (currentStep === 2 && amount) {
+            convertToNaira();
+        } else if (currentStep === 3) {
+            setCurrentStep(4); // Move to transaction hash input
+        } else if (currentStep === 4 && transactionHash) {
+            verifyTransaction();
         }
     };
 
-    const prevStep = () => {
+    const handlePrevious = () => {
         if (currentStep > 1) {
             setCurrentStep(currentStep - 1);
             setError("");
         }
     };
 
+    const handleNetworkSelect = (network) => {
+        setSelectedNetwork(network);
+    };
+
+    const handleAmountChange = (e) => {
+        const value = e.target.value;
+        if (value === "" || /^\d*\.?\d*$/.test(value)) {
+            setAmount(value);
+        }
+    };
+
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat("en-NG", {
+            style: "currency",
+            currency: "NGN",
+        }).format(value);
+    };
+
+    const formatNumber = (value) => {
+        return new Intl.NumberFormat().format(value);
+    };
+
     const renderStep1 = () => (
-        <div className="p-6">
-            <h2 className="text-xl font-bold mb-4">Select Network</h2>
+        <div className="py-6">
+            <h2 className="text-xl font-semibold mb-4">Select Network</h2>
             <p className="text-gray-600 mb-6">
-                Choose a blockchain network for your donation
+                Choose a cryptocurrency network for your donation
             </p>
 
-            {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                    <Loader className="animate-spin w-6 h-6" />
-                    <span className="ml-2">Loading networks...</span>
+            {loading ? (
+                <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
             ) : (
-                <div className="space-y-3">
-                    {availableNetworks.map((network) => (
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                    {networks.map((network) => (
                         <button
                             key={network}
-                            onClick={() => setSelectedNetwork(network)}
-                            className={`w-full p-4 border rounded-lg text-left hover:bg-gray-50 transition-colors ${
+                            onClick={() => handleNetworkSelect(network)}
+                            className={`p-4 border-2 rounded-lg text-center font-medium transition-colors ${
                                 selectedNetwork === network
-                                    ? "border-blue-500 bg-blue-50"
-                                    : "border-gray-200"
+                                    ? "border-blue-600 bg-blue-50 text-blue-700"
+                                    : "border-gray-200 hover:border-gray-300 text-gray-700"
                             }`}
                         >
-                            <div className="font-medium">
-                                {networkNames[network] || network.toUpperCase()}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                                {network.toUpperCase()}
-                            </div>
+                            {network.toUpperCase()}
                         </button>
                     ))}
                 </div>
             )}
 
-            <div className="flex justify-between mt-6">
-                <button
-                    onClick={onClose}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                >
-                    Cancel
-                </button>
-                <button
-                    onClick={nextStep}
-                    disabled={!selectedNetwork}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 flex items-center"
-                >
-                    Next <ChevronRight className="w-4 h-4 ml-1" />
-                </button>
-            </div>
+            {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">
+                    {error}
+                </div>
+            )}
         </div>
     );
 
     const renderStep2 = () => (
-        <div className="p-6">
-            <h2 className="text-xl font-bold mb-4">Enter Donation Amount</h2>
+        <div className="py-6">
+            <h2 className="text-xl font-semibold mb-4">
+                Enter Donation Amount
+            </h2>
             <p className="text-gray-600 mb-6">
-                Donating to: <span className="font-medium">{need.title}</span>
+                How much would you like to donate to{" "}
+                <strong>{need?.title}</strong>?
             </p>
 
             <div className="mb-6">
@@ -234,190 +223,315 @@ const DonationModal: React.FC<DonationModalProps> = ({
                     Amount in Naira (₦)
                 </label>
                 <input
-                    type="number"
-                    value={donationAmount}
-                    onChange={(e) => setDonationAmount(e.target.value)}
-                    placeholder="Enter amount"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    type="text"
+                    value={amount}
+                    onChange={handleAmountChange}
+                    placeholder="Enter amount..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    autoFocus
                 />
-
-                <button
-                    className="bg-green-500 rounded-md  px-2 py-1 mt-2 m-auto"
-                    onClick={() => {
-                        convertNairaToCrypto();
-                    }}
-                >
-                    check amount
-                </button>
             </div>
 
-            {cryptoEquivalent && (
-                <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                    <div className="text-green-800 text-lg">
-                        Equivalent of 1 {networkNames[selectedNetwork]} is $
-                        {cryptoEquivalent.priceInUsdt}
-                    </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Selected Network:</span>
+                    <span className="font-medium text-gray-900">
+                        {selectedNetwork?.toUpperCase()}
+                    </span>
+                </div>
+            </div>
 
-                    <div className="text-lg font-bold">
-                        using ${cryptoEquivalent.usdtToNaira} to &#x20A6;1
-                        {cryptoEquivalent.symbol}
-                    </div>
-
-                    <p>
-                        your total amount in Naira is &#x20A6;
-                        {cryptoEquivalent.ngnValue}
-                    </p>
+            {error && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">
+                    {error}
                 </div>
             )}
-
-            <div className="flex justify-between mt-6">
-                <button
-                    onClick={prevStep}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center"
-                >
-                    <ChevronLeft className="w-4 h-4 mr-1" /> Back
-                </button>
-                <button
-                    onClick={nextStep}
-                    disabled={!donationAmount || isLoading}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 flex items-center"
-                >
-                    {isLoading ? (
-                        <Loader className="animate-spin w-4 h-4 mr-2" />
-                    ) : null}
-                    Continue <ChevronRight className="w-4 h-4 ml-1" />
-                </button>
-            </div>
         </div>
     );
 
     const renderStep3 = () => (
-        <div className="p-6">
-            <h2 className="text-xl font-bold mb-4">Select Wallet</h2>
+        <div className="py-6">
+            <h2 className="text-xl font-semibold mb-4">
+                Confirm Your Donation
+            </h2>
             <p className="text-gray-600 mb-6">
-                Choose your preferred wallet to complete the payment
+                Please review your donation details
             </p>
 
-            <div className="space-y-3 mb-6">
-                {walletOptions.map((wallet) => (
-                    <button
-                        key={wallet.id}
-                        onClick={() => handleWalletConnect(wallet.id)}
-                        disabled={isLoading}
-                        className="w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 flex items-center space-x-3 transition-colors disabled:opacity-50"
-                    >
-                        <span className="text-2xl">{wallet.icon}</span>
-                        <div className="flex-1 text-left">
-                            <div className="font-medium">{wallet.name}</div>
-                            <div className="text-sm text-gray-500">
-                                Connect with {wallet.name}
+            {conversionData && (
+                <div className="space-y-4 mb-6">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="font-medium text-gray-900 mb-3">
+                            Donation Summary
+                        </h3>
+                        <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">
+                                    Amount in Naira:
+                                </span>
+                                <span className="font-medium">
+                                    {formatCurrency(
+                                        conversionData.ngnValue / 1000000
+                                    )}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Network:</span>
+                                <span className="font-medium">
+                                    {conversionData.coin.toUpperCase()}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">
+                                    USDT Equivalent:
+                                </span>
+                                <span className="font-medium">
+                                    $
+                                    {formatNumber(
+                                        conversionData.usdtValue / 1000000
+                                    )}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">
+                                    Crypto Quantity:
+                                </span>
+                                <span className="font-medium">
+                                    {formatNumber(conversionData.quantity)}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">
+                                    Exchange Rate:
+                                </span>
+                                <span className="font-medium">
+                                    ₦{formatNumber(conversionData.usdtToNaira)}{" "}
+                                    per USDT
+                                </span>
                             </div>
                         </div>
-                        <Wallet className="w-5 h-5 text-gray-400" />
-                    </button>
-                ))}
-            </div>
+                    </div>
 
-            {isLoading && (
-                <div className="text-center py-4">
-                    <Loader className="animate-spin w-6 h-6 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">
-                        Verifying transaction...
-                    </p>
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                        <h4 className="font-medium text-blue-900 mb-2">
+                            Need Details
+                        </h4>
+                        <p className="text-blue-800 text-sm">{need?.title}</p>
+                        {need?.description && (
+                            <p className="text-blue-700 text-xs mt-1">
+                                {need.description}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                        <h4 className="font-medium text-yellow-900 mb-2">
+                            Next Steps
+                        </h4>
+                        <ol className="text-yellow-800 text-sm space-y-1">
+                            <li>
+                                1. Send exactly{" "}
+                                <strong>
+                                    {formatNumber(conversionData.quantity)}{" "}
+                                    {conversionData.coin.toUpperCase()}
+                                </strong>{" "}
+                                to the provided wallet address
+                            </li>
+                            <li>2. Copy and save your transaction hash</li>
+                            <li>3. Return here to verify your transaction</li>
+                        </ol>
+                    </div>
                 </div>
             )}
 
-            <div className="flex justify-between mt-6">
-                <button
-                    onClick={prevStep}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center"
-                >
-                    <ChevronLeft className="w-4 h-4 mr-1" /> Back
-                </button>
-            </div>
+            {loading && (
+                <div className="flex justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                </div>
+            )}
         </div>
     );
 
     const renderStep4 = () => (
-        <div className="p-6 text-center">
-            {paymentVerified ? (
-                <>
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Check className="w-8 h-8 text-green-600" />
-                    </div>
-                    <h2 className="text-xl font-bold text-green-800 mb-2">
-                        Payment Verified!
-                    </h2>
-                    <p className="text-gray-600 mb-4">
-                        Your donation of ₦{donationAmount} has been successfully
-                        processed.
-                    </p>
-                    <div className="bg-gray-50 p-3 rounded-lg mb-6">
-                        <div className="text-xs text-gray-500">
-                            Transaction Hash
-                        </div>
-                        <div className="text-sm font-mono break-all">
-                            {transactionHash}
-                        </div>
-                    </div>
-                </>
-            ) : (
-                <>
-                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <AlertCircle className="w-8 h-8 text-red-600" />
-                    </div>
-                    <h2 className="text-xl font-bold text-red-800 mb-2">
-                        Payment Failed
-                    </h2>
-                    <p className="text-gray-600 mb-4">
-                        We couldn't verify your payment. Please try again.
-                    </p>
-                </>
-            )}
+        <div className="py-6">
+            <h2 className="text-xl font-semibold mb-4">Verify Transaction</h2>
+            <p className="text-gray-600 mb-6">
+                Enter your transaction hash to verify the donation
+            </p>
 
-            <button
-                onClick={onClose}
-                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-                Close
-            </button>
+            <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Transaction Hash
+                </label>
+                <input
+                    type="text"
+                    value={transactionHash}
+                    onChange={(e) => setTransactionHash(e.target.value)}
+                    placeholder="Enter transaction hash..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    autoFocus
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                    This is the hash/ID you received after sending the
+                    cryptocurrency
+                </p>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
+                <div className="flex justify-between">
+                    <span className="text-gray-600">Network:</span>
+                    <span className="font-medium">
+                        {selectedNetwork?.toUpperCase()}
+                    </span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-gray-600">Expected Amount:</span>
+                    <span className="font-medium">
+                        {conversionData
+                            ? formatNumber(conversionData.quantity)
+                            : ""}{" "}
+                        {selectedNetwork?.toUpperCase()}
+                    </span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-gray-600">Need ID:</span>
+                    <span className="font-medium">#{need?.id}</span>
+                </div>
+            </div>
+
+            {error && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">
+                    {error}
+                </div>
+            )}
         </div>
     );
 
-    return (
-        <Modal onClose={onClose} isOpen={isOpen}>
-            {error && (
-                <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
-                    <div className="flex">
-                        <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 mr-3" />
-                        <p className="text-red-700">{error}</p>
+    const renderStep5 = () => (
+        <div className="py-6">
+            <div className="text-center">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                    <svg
+                        className="h-6 w-6 text-green-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 13l4 4L19 7"
+                        ></path>
+                    </svg>
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                    Transaction Verified!
+                </h2>
+                <p className="text-gray-600 mb-6">
+                    Your donation has been successfully verified and processed.
+                </p>
+            </div>
+
+            {verificationResult && (
+                <div className="bg-green-50 p-4 rounded-lg mb-6">
+                    <h3 className="font-medium text-green-900 mb-3">
+                        Verification Details
+                    </h3>
+                    <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                            <span className="text-green-700">Status:</span>
+                            <span className="font-medium text-green-900">
+                                Verified ✓
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-green-700">
+                                Transaction Hash:
+                            </span>
+                            <span className="font-mono text-xs text-green-900 break-all">
+                                {transactionHash}
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-green-700">Network:</span>
+                            <span className="font-medium text-green-900">
+                                {selectedNetwork?.toUpperCase()}
+                            </span>
+                        </div>
                     </div>
                 </div>
             )}
 
-            {/* Progress indicator */}
-            <div className="px-6 pt-4">
-                <div className="flex items-center justify-between mb-6">
-                    {[1, 2, 3, 4].map((step) => (
-                        <div
-                            key={step}
-                            className={`flex items-center ${
-                                step !== 4 ? "flex-1" : ""
-                            }`}
+            <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-medium text-blue-900 mb-2">Thank You!</h4>
+                <p className="text-blue-800 text-sm">
+                    Your donation to <strong>{need?.title}</strong> has been
+                    received and will make a real difference. You should receive
+                    a confirmation email shortly.
+                </p>
+            </div>
+
+            {loading && (
+                <div className="flex justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                </div>
+            )}
+        </div>
+    );
+
+    const canProceed = () => {
+        if (currentStep === 1) return selectedNetwork;
+        if (currentStep === 2) return amount && parseFloat(amount) > 0;
+        if (currentStep === 3) return true; // Always can proceed from confirmation
+        if (currentStep === 4)
+            return transactionHash && transactionHash.trim().length > 0;
+        return false;
+    };
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose}>
+            <div className="w-full max-w-md mx-auto">
+                {/* Header */}
+                <div className="flex items-center justify-between py-4 border-b">
+                    <h1 className="text-lg font-semibold">Make a Donation</h1>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                        <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                         >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* Progress indicator */}
+                <div className="flex items-center justify-center py-4">
+                    {[1, 2, 3, 4, 5].map((step) => (
+                        <div key={step} className="flex items-center">
                             <div
                                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                                    step <= currentStep
+                                    currentStep >= step
                                         ? "bg-blue-600 text-white"
                                         : "bg-gray-200 text-gray-600"
                                 }`}
                             >
-                                {step}
+                                {step === 5 && currentStep === 5 ? "✓" : step}
                             </div>
-                            {step !== 4 && (
+                            {step < 5 && (
                                 <div
-                                    className={`h-0.5 flex-1 mx-2 ${
-                                        step < currentStep
+                                    className={`w-8 h-1 mx-1 ${
+                                        currentStep > step
                                             ? "bg-blue-600"
                                             : "bg-gray-200"
                                     }`}
@@ -426,62 +540,71 @@ const DonationModal: React.FC<DonationModalProps> = ({
                         </div>
                     ))}
                 </div>
-            </div>
 
-            <div className="step-content">
-                {(() => {
-                    switch (currentStep) {
-                        case 1:
-                            return renderStep1();
-                        case 2:
-                            return renderStep2();
-                        case 3:
-                            return renderStep3();
-                        case 4:
-                            return renderStep4();
-                        default:
-                            return null;
-                    }
-                })()}
+                {/* Content */}
+                <div className="min-h-[300px]">
+                    {currentStep === 1 && renderStep1()}
+                    {currentStep === 2 && renderStep2()}
+                    {currentStep === 3 && renderStep3()}
+                    {currentStep === 4 && renderStep4()}
+                    {currentStep === 5 && renderStep5()}
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between py-4 border-t">
+                    <button
+                        onClick={handlePrevious}
+                        disabled={currentStep === 1}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                            currentStep === 1
+                                ? "text-gray-400 cursor-not-allowed"
+                                : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                    >
+                        Previous
+                    </button>
+
+                    <div className="flex space-x-3">
+                        {currentStep < 5 && currentStep !== 3 && (
+                            <button
+                                onClick={handleNext}
+                                disabled={!canProceed() || loading}
+                                className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                                    canProceed() && !loading
+                                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                }`}
+                            >
+                                {loading
+                                    ? "Loading..."
+                                    : currentStep === 4
+                                    ? "Verify Transaction"
+                                    : "Next"}
+                            </button>
+                        )}
+
+                        {currentStep === 3 && (
+                            <button
+                                onClick={handleNext}
+                                className="px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                            >
+                                Proceed to Verification
+                            </button>
+                        )}
+
+                        {currentStep === 5 && (
+                            <button
+                                onClick={onClose}
+                                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                            >
+                                Close
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
         </Modal>
     );
 };
-
-// // Example usage component
-// const ExampleUsage = () => {
-//     const [showModal, setShowModal] = useState(false);
-
-//     // Mock data - replace with your actual data
-//     const mockNeed = {
-//         _id: "12345",
-//         title: "Help Build Clean Water Well",
-//     };
-
-//     const mockRootUrl = "https://api.yourapp.com";
-//     const mockAccessToken = "your-access-token";
-
-//     return (
-//         <div className="p-8">
-//             <button
-//                 onClick={() => setShowModal(true)}
-//                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-//             >
-//                 Open Donation Modal
-//             </button>
-
-//             {showModal && (
-//                 <DonationModal
-//                     need={mockNeed}
-//                     onClose={() => setShowModal(false)}
-//                     rootUrl={mockRootUrl}
-//                     accessToken={mockAccessToken}
-//                 />
-//             )}
-//         </div>
-//     );
-// };
-
-// export default ExampleUsage;
 
 export default DonationModal;

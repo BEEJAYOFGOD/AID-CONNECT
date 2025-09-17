@@ -162,6 +162,8 @@ const BrowseNeeds = () => {
 
             const data = await response.json();
 
+            console.log(data);
+
             // Handle different possible response structures
             if (data.data) {
                 setNeeds(data.data);
@@ -589,8 +591,6 @@ const BrowseNeeds = () => {
                                                 onClose={() =>
                                                     setShowModal(false)
                                                 }
-                                                rootUrl={root_url}
-                                                accessToken={accessToken}
                                                 isOpen={showModal}
                                             />
                                         )}
