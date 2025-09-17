@@ -493,7 +493,7 @@ const DonationModal = ({ need, onClose, isOpen }) => {
                 </div>
                 <div className="flex justify-between">
                     <span className="text-gray-600">Need ID:</span>
-                    <span className="font-medium">#{need?.id}</span>
+                    <span className="font-medium">#{need?._id}</span>
                 </div>
             </div>
 
