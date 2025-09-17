@@ -138,7 +138,7 @@ const BrowseNeeds = () => {
             // Add status filter to show only active requests
             params.append("status", "active");
 
-            const url = `${root_url}/request?${params.toString()}`;
+            const url = `${root_url}/request/all/available?${params.toString()}`;
 
             const headers = {
                 Authorization: `Bearer ${token}`,
