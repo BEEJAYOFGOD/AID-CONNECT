@@ -195,7 +195,7 @@ const DonationModal = ({ need, onClose, isOpen }) => {
 
     // Verify transaction
     const verifyTransaction = async () => {
-        if (!transactionHash || !need?.id) return;
+        if (!transactionHash || !need?._id) return;
 
         try {
             setLoading(true);
@@ -236,6 +236,7 @@ const DonationModal = ({ need, onClose, isOpen }) => {
         } else if (currentStep === 3) {
             setCurrentStep(4); // Move to transaction hash input
         } else if (currentStep === 4 && transactionHash) {
+            console.log("amen");
             verifyTransaction();
         }
     };
