@@ -250,7 +250,7 @@ const BrowseNeeds = () => {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat("en-US", {
             style: "currency",
-            currency: "USD",
+            currency: "NGN",
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
         }).format(amount || 0);
@@ -528,14 +528,15 @@ const BrowseNeeds = () => {
                                                 <span className="text-sm font-medium text-foreground">
                                                     {formatCurrency(
                                                         need.currentAmount || 0
-                                                    )}{" "}
+                                                    )}
                                                     raised
                                                 </span>
                                                 <span className="text-sm text-muted-foreground">
                                                     {getProgress(
-                                                        need.currentAmount,
+                                                        need.donation.amount ||
+                                                            0,
                                                         need.amount
-                                                    )}{" "}
+                                                    )}
                                                     % of{" "}
                                                     {formatCurrency(
                                                         need.amount
