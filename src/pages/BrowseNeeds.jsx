@@ -33,7 +33,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, root_url } from "@/contexts/AuthContext";
-import Modal from "@/components/modal";
 import DonationModal from "@/components/DonationModal";
 
 const BrowseNeeds = () => {
