@@ -432,8 +432,13 @@ const DonationModal = ({ need, onClose, isOpen }) => {
                                 <strong>
                                     {formatNumber(conversionData.quantity)}{" "}
                                     {conversionData.coin.toUpperCase()}
-                                </strong>{" "}
-                                to the provided wallet address
+                                </strong>
+                                {`to the provided  need wallet address and networks`}
+                                {need.wallets.map((wallet) => (
+                                    <p>
+                                        {wallet.address} for {wallet.network}
+                                    </p>
+                                ))}
                             </li>
                             <li>2. Copy and save your transaction hash</li>
                             <li>3. Return here to verify your transaction</li>
