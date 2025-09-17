@@ -533,7 +533,7 @@ const BrowseNeeds = () => {
                                                 </span>
                                                 <span className="text-sm text-muted-foreground">
                                                     {getProgress(
-                                                        need.donation.amount ||
+                                                        need.donation?.amount ||
                                                             0,
                                                         need.amount
                                                     )}
